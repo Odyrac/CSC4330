@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Signika+Negative:wght@400&display=swap');
+
+.button-container {
+    display: flex;
+    align-items: center;
+    padding: 8px 14px;
+    background-color: #F2F2F2;
+    color: #050505;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #D2D2D2;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-family: Signika Negative, sans-serif;
+    font-size: 22px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.button-container:hover {
+    background-color: rgba(224, 224, 224, 0.9);
+}
+
+.button-icon {
+    width: 28px;
+    height: 28px;
+    margin-right: 10px;
+}
