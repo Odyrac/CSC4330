@@ -4,17 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="src/styles/main.css">
-    <link rel="stylesheet" href="src/styles/components.css">
     <link rel="icon" type="image/png" href="src/assets/icon.png">
     <title>Home</title>
+
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="stylesheet" href="src/styles/components.css">
 
     <script src="src/scripts/components/Button.js"></script>
 </head>
 
 <body>
 
-    <script> createButton('New game', 'play', function () { console.log('New game clicked'); }); </script>
+    <img src="src/assets/banner.png" alt="Banner" id="banner">
+
+    <h1 id="title">Chaoui</h1>
+
+    <script> createButton('New game', 'play', function () { window.location.href = 'game.html'; }); </script>
 
 </body>
 

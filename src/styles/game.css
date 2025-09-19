@@ -1,0 +1,61 @@
+.pile-container {
+    display: flex;
+    flex-direction: row;
+    position: absolute;
+    gap: 20px;
+}
+
+.pile {
+    position: relative;
+    width: 100px;
+    height: 140px;
+}
+
+#playerPiles {
+    bottom: 20px;
+}
+
+#playerPiles .current {
+    bottom: 40px;
+}
+
+#opponentPiles {
+    top: 20px;
+}
+
+#opponentPiles .current {
+    top: 40px;
+}
+
+.pile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+.pile-count {
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #F2F2F2;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 14px;
+}
+
+.dragging-image {
+    width: 100px;
+    height: 140px;
+    opacity: 0.95;
+    transform: rotate(0deg);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    transition: transform 0.05s linear;
+}
+
+.drop-highlight {
+    outline: 3px dashed #edc916;
+    outline-offset: 4px;
+    border-radius: 6px;
+}

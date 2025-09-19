@@ -1,1 +1,35 @@
-<!-- Game Page -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="src/assets/icon.png">
+    <title>Game</title>
+
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="stylesheet" href="src/styles/components.css">
+    <link rel="stylesheet" href="src/styles/game.css">
+
+    <script src="src/scripts/components/Button.js"></script>
+    <script src="src/scripts/deck.js"></script>
+    <script src="src/scripts/ui.js"></script>
+    <script src="src/scripts/dragdrop.js"></script>
+    <script src="src/scripts/gameController.js"></script>
+</head>
+
+<body>
+    <div id="playerPiles" class="pile-container">
+        <div class="pile facedown" id="playerFacedown"></div>
+        <div class="pile discard" id="playerDiscard"></div>
+        <div class="pile current" id="playerCurrent"></div>
+    </div>
+
+    <div id="opponentPiles" class="pile-container">
+        <div class="pile facedown" id="opponentFacedown"></div>
+        <div class="pile discard" id="opponentDiscard"></div>
+        <div class="pile current" id="opponentCurrent"></div>
+    </div>
+</body>
+
+</html>
