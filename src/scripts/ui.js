@@ -39,5 +39,26 @@
         container.appendChild(counter);
     }
 
-    global.UI = { renderFacedown, renderCurrent, renderDiscard };
+    function renderBoardSlot(slotEl, cards) {
+        clear(slotEl);
+        const stack = Array.isArray(cards) ? cards : [];
+        const offsetY = 40;
+        for (let i = 0; i < stack.length; i++) {
+            const card = stack[i];
+            const wrapper = document.createElement('div');
+            wrapper.className = 'board-card';
+            const y = i * offsetY;
+            wrapper.style.transform = `translateY(${y}px)`;
+            wrapper.style.zIndex = 100 + i;
+
+            const img = document.createElement('img');
+            img.src = `src/assets/cards/${card.id}.png`;
+            img.alt = 'Board card';
+
+            wrapper.appendChild(img);
+            slotEl.appendChild(wrapper);
+        }
+    }
+
+    global.UI = { renderFacedown, renderCurrent, renderDiscard, renderBoardSlot };
 })(window);
