@@ -3,6 +3,8 @@
     let playerDiscardEl = null;
     let opponentDiscardEl = null;
     let boardSlotEls = null;
+    let leftFoundationEls = null;
+    let rightFoundationEls = null;
 
     function createCloneImage(img) {
         const clone = img.cloneNode(true);
@@ -55,22 +57,31 @@
     function getDropTargetAt(x, y) {
         if (boardSlotEls && boardSlotEls.length) {
             for (let i = 0; i < boardSlotEls.length; i++) {
-                const slotEl = boardSlotEls[i];
-                if (!slotEl) continue;
-                try {
-                    const cards = slotEl.querySelectorAll && slotEl.querySelectorAll('.board-card');
-                    if (cards && cards.length) {
-                        const last = cards[cards.length - 1];
-                        const r = last.getBoundingClientRect();
-                        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return { type: 'board', el: slotEl, slotEl: slotEl, cardEl: last, index: i };
-                        continue;
-                    }
-                } catch (err) {
-                }
-                const rSlot = slotEl.getBoundingClientRect();
-                if (x >= rSlot.left && x <= rSlot.right && y >= rSlot.top && y <= rSlot.bottom) return { type: 'board', el: slotEl, slotEl: slotEl, index: i };
+                const el = boardSlotEls[i];
+                if (!el) continue;
+                const r = el.getBoundingClientRect();
+                if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return { type: 'board', el: el, index: i };
             }
         }
+        
+        if (leftFoundationEls && leftFoundationEls.length) {
+            for (let i = 0; i < leftFoundationEls.length; i++) {
+                const el = leftFoundationEls[i];
+                if (!el) continue;
+                const r = el.getBoundingClientRect();
+                if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return { type: 'leftFoundation', el: el, index: i };
+            }
+        }
+        
+        if (rightFoundationEls && rightFoundationEls.length) {
+            for (let i = 0; i < rightFoundationEls.length; i++) {
+                const el = rightFoundationEls[i];
+                if (!el) continue;
+                const r = el.getBoundingClientRect();
+                if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return { type: 'rightFoundation', el: el, index: i };
+            }
+        }
+        
         if (!playerDiscardEl || !opponentDiscardEl) return null;
         const pD = playerDiscardEl.getBoundingClientRect();
         const oD = opponentDiscardEl.getBoundingClientRect();
@@ -92,6 +103,8 @@
                 }
             });
         }
+        if (leftFoundationEls && leftFoundationEls.length) leftFoundationEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
+        if (rightFoundationEls && rightFoundationEls.length) rightFoundationEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
         if (target && target.cardEl) {
             if (target.cardEl.classList) target.cardEl.classList.add('drop-highlight');
         } else if (target && target.el && target.el.classList) {
@@ -102,6 +115,8 @@
     function clearHighlight() {
         [playerDiscardEl, opponentDiscardEl].forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
         if (boardSlotEls && boardSlotEls.length) boardSlotEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
+        if (leftFoundationEls && leftFoundationEls.length) leftFoundationEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
+        if (rightFoundationEls && rightFoundationEls.length) rightFoundationEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
     }
 
     function onMouseMove(e) {
@@ -129,6 +144,8 @@
                 } else if (target.type === 'board') {
                     const slotTarget = target.slotEl || target.el;
                     cardsToMove.forEach(c => slotTarget && slotTarget.__appendCardFor && slotTarget.__appendCardFor(null, c));
+                } else if (target.type === 'leftFoundation' || target.type === 'rightFoundation') {
+                    cardsToMove.forEach(c => target.el.__appendCardFor && target.el.__appendCardFor(null, c));
                 }
                 dragState.onMoved && dragState.onMoved(fromSide);
             } else if (fromSide.current) {
@@ -141,6 +158,8 @@
                 } else if (target.type === 'board') {
                     const slotTarget = target.slotEl || target.el;
                     slotTarget && slotTarget.__appendCardFor && slotTarget.__appendCardFor(null, card);
+                } else if (target.type === 'leftFoundation' || target.type === 'rightFoundation') {
+                    target.el.__appendCardFor && target.el.__appendCardFor(null, card);
                 }
                 dragState.onMoved && dragState.onMoved(fromSide);
             }
@@ -198,6 +217,8 @@
         playerDiscardEl = opts.playerDiscardEl;
         opponentDiscardEl = opts.opponentDiscardEl;
         boardSlotEls = Array.isArray(opts.boardSlotEls) ? opts.boardSlotEls : null;
+        leftFoundationEls = Array.isArray(opts.leftFoundationEls) ? opts.leftFoundationEls : null;
+        rightFoundationEls = Array.isArray(opts.rightFoundationEls) ? opts.rightFoundationEls : null;
     }
 
     global.DragDrop = { init, onMouseDown };

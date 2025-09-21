@@ -48,7 +48,30 @@
             boardSlots.push(el);
         }
 
-        DragDrop.init({ playerDiscardEl: playerDiscard, opponentDiscardEl: opponentDiscard, boardSlotEls: boardSlots });
+        // Foundation piles setup
+        const leftFoundations = [];
+        const rightFoundations = [];
+        for (let i = 0; i < 2; i++) {
+            const el = document.getElementById(`leftFoundation${i}`);
+            leftFoundations.push(el);
+        }
+        for (let i = 0; i < 4; i++) {
+            const el = document.getElementById(`rightFoundation${i}`);
+            rightFoundations.push(el);
+        }
+
+        const foundationPiles = {
+            left: [[], []], // 2 left foundation piles
+            right: [[], [], [], []] // 4 right foundation piles
+        };
+
+        DragDrop.init({ 
+            playerDiscardEl: playerDiscard, 
+            opponentDiscardEl: opponentDiscard, 
+            boardSlotEls: boardSlots,
+            leftFoundationEls: leftFoundations,
+            rightFoundationEls: rightFoundations
+        });
 
         const board = [[], [], [], [], [], []];
 
@@ -148,6 +171,83 @@
         opponentCurrent.addEventListener('mousedown', (e) => DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
             UI.renderCurrent(opponentCurrent, fromSide.current);
         }));
+
+        // Foundation pile handlers
+        function appendCardToFoundation(side, index, owner, card, entireStack, sourceSlotIndex) {
+            const piles = side === 'left' ? foundationPiles.left : foundationPiles.right;
+            if (index < 0 || index >= piles.length) return;
+            
+            if (entireStack && Array.isArray(entireStack)) {
+                piles[index].push(...entireStack);
+            } else {
+                piles[index].push(card);
+            }
+            
+            const elements = side === 'left' ? leftFoundations : rightFoundations;
+            UI.renderFoundation(elements[index], piles[index]);
+            
+            // Remove from source board slot if applicable
+            if (sourceSlotIndex !== undefined && sourceSlotIndex !== null && sourceSlotIndex >= 0 && sourceSlotIndex < board.length) {
+                if (entireStack && Array.isArray(entireStack)) {
+                    board[sourceSlotIndex] = [];
+                } else {
+                    board[sourceSlotIndex].pop();
+                }
+                UI.renderBoardSlot(boardSlots[sourceSlotIndex], board[sourceSlotIndex]);
+            }
+        }
+
+        // Setup left foundation piles
+        leftFoundations.forEach((foundationEl, idx) => {
+            if (!foundationEl) return;
+            foundationEl.__appendCardFor = function (owner, card, entireStack, sourceSlotIndex) { 
+                appendCardToFoundation('left', idx, owner, card, entireStack, sourceSlotIndex); 
+            };
+            foundationEl.addEventListener('mousedown', (e) => {
+                const pile = foundationPiles.left[idx];
+                if (!pile || pile.length === 0) return;
+                const tempSide = { 
+                    current: pile[pile.length - 1],
+                    sourceFoundation: { side: 'left', index: idx }
+                };
+                DragDrop.onMouseDown(e, tempSide, foundationEl, (fromSide) => {
+                    if (!fromSide.current && fromSide.sourceFoundation) {
+                        const { side, index } = fromSide.sourceFoundation;
+                        const piles = side === 'left' ? foundationPiles.left : foundationPiles.right;
+                        piles[index].pop();
+                        const elements = side === 'left' ? leftFoundations : rightFoundations;
+                        UI.renderFoundation(elements[index], piles[index]);
+                    }
+                });
+            });
+            UI.renderFoundation(foundationEl, []);
+        });
+
+        // Setup right foundation piles
+        rightFoundations.forEach((foundationEl, idx) => {
+            if (!foundationEl) return;
+            foundationEl.__appendCardFor = function (owner, card, entireStack, sourceSlotIndex) { 
+                appendCardToFoundation('right', idx, owner, card, entireStack, sourceSlotIndex); 
+            };
+            foundationEl.addEventListener('mousedown', (e) => {
+                const pile = foundationPiles.right[idx];
+                if (!pile || pile.length === 0) return;
+                const tempSide = { 
+                    current: pile[pile.length - 1],
+                    sourceFoundation: { side: 'right', index: idx }
+                };
+                DragDrop.onMouseDown(e, tempSide, foundationEl, (fromSide) => {
+                    if (!fromSide.current && fromSide.sourceFoundation) {
+                        const { side, index } = fromSide.sourceFoundation;
+                        const piles = side === 'left' ? foundationPiles.left : foundationPiles.right;
+                        piles[index].pop();
+                        const elements = side === 'left' ? leftFoundations : rightFoundations;
+                        UI.renderFoundation(elements[index], piles[index]);
+                    }
+                });
+            });
+            UI.renderFoundation(foundationEl, []);
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => setupGame());

@@ -60,5 +60,28 @@
         }
     }
 
-    global.UI = { renderFacedown, renderCurrent, renderDiscard, renderBoardSlot };
+    function renderFoundation(container, cards) {
+        clear(container);
+        const stack = Array.isArray(cards) ? cards : [];
+        
+        if (stack.length === 0) {
+            const placeholder = document.createElement('div');
+            container.appendChild(placeholder);
+        } else {
+            const topCard = stack[stack.length - 1];
+            const img = document.createElement('img');
+            img.src = `src/assets/cards/${topCard.id}.png`;
+            img.alt = 'Foundation card';
+            container.appendChild(img);
+            
+            if (stack.length > 1) {
+                const counter = document.createElement('div');
+                counter.className = 'pile-count';
+                counter.textContent = stack.length;
+                container.appendChild(counter);
+            }
+        }
+    }
+
+    global.UI = { renderFacedown, renderCurrent, renderDiscard, renderBoardSlot, renderFoundation };
 })(window);
