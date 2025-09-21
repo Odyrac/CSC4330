@@ -64,6 +64,37 @@
             slotEl.addEventListener('mousedown', (e) => {
                 const stack = board[idx];
                 if (!stack || stack.length === 0) return;
+                try {
+                    const cards = slotEl.querySelectorAll && slotEl.querySelectorAll('.board-card');
+                    if (cards && cards.length) {
+                        const firstCard = cards[0];
+                        const lastCard = cards[cards.length - 1];
+                        const clickedCard = e.target.closest && e.target.closest('.board-card');
+                        if (clickedCard && clickedCard === lastCard) {
+                            const tempSide = { current: stack[stack.length - 1] };
+                            DragDrop.onMouseDown(e, tempSide, lastCard, (fromSide) => {
+                                if (!fromSide.current) {
+                                    stack.pop();
+                                }
+                                UI.renderBoardSlot(slotEl, stack);
+                            });
+                            return;
+                        }
+                        if (clickedCard && clickedCard === firstCard) {
+                            const tempSide = { stack: stack.slice() };
+                            DragDrop.onMouseDown(e, tempSide, firstCard, (fromSide) => {
+                                const moved = fromSide.movedCount || 0;
+                                for (let i = 0; i < moved; i++) {
+                                    stack.pop();
+                                }
+                                UI.renderBoardSlot(slotEl, stack);
+                            });
+                            return;
+                        }
+                        return;
+                    }
+                } catch (err) {
+                }
                 const tempSide = { current: stack[stack.length - 1] };
                 DragDrop.onMouseDown(e, tempSide, slotEl, (fromSide) => {
                     if (!fromSide.current) {
