@@ -60,5 +60,15 @@
         }
     }
 
-    global.UI = { renderFacedown, renderCurrent, renderDiscard, renderBoardSlot };
+    function renderSmallPile(container, cards) {
+        clear(container);
+        const stack = Array.isArray(cards) ? cards : [];
+        if (stack.length === 0) return;
+        const img = document.createElement('img');
+        img.src = `src/assets/cards/${stack[stack.length - 1].id}.png`;
+        img.alt = 'Small pile card';
+        container.appendChild(img);
+    }
+
+    global.UI = { renderFacedown, renderCurrent, renderDiscard, renderBoardSlot, renderSmallPile };
 })(window);

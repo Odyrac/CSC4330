@@ -3,6 +3,8 @@
     let playerDiscardEl = null;
     let opponentDiscardEl = null;
     let boardSlotEls = null;
+    let trumpPileEls = null;
+    let foundationPileEls = null;
 
     function createCloneImage(img) {
         const clone = img.cloneNode(true);
@@ -76,6 +78,24 @@
         const oD = opponentDiscardEl.getBoundingClientRect();
         if (x >= pD.left && x <= pD.right && y >= pD.top && y <= pD.bottom) return { type: 'player', el: playerDiscardEl };
         if (x >= oD.left && x <= oD.right && y >= oD.top && y <= oD.bottom) return { type: 'opponent', el: opponentDiscardEl };
+
+        if (trumpPileEls && trumpPileEls.length) {
+            for (let i = 0; i < trumpPileEls.length; i++) {
+                const el = trumpPileEls[i];
+                if (!el) continue;
+                const r = el.getBoundingClientRect();
+                if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return { type: 'trump', el: el, index: i };
+            }
+        }
+
+        if (foundationPileEls && foundationPileEls.length) {
+            for (let i = 0; i < foundationPileEls.length; i++) {
+                const el = foundationPileEls[i];
+                if (!el) continue;
+                const r = el.getBoundingClientRect();
+                if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return { type: 'foundation', el: el, index: i };
+            }
+        }
         return null;
     }
 
@@ -92,6 +112,8 @@
                 }
             });
         }
+        if (trumpPileEls && trumpPileEls.length) trumpPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
+        if (foundationPileEls && foundationPileEls.length) foundationPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
         if (target && target.cardEl) {
             if (target.cardEl.classList) target.cardEl.classList.add('drop-highlight');
         } else if (target && target.el && target.el.classList) {
@@ -102,6 +124,8 @@
     function clearHighlight() {
         [playerDiscardEl, opponentDiscardEl].forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
         if (boardSlotEls && boardSlotEls.length) boardSlotEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
+        if (trumpPileEls && trumpPileEls.length) trumpPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
+        if (foundationPileEls && foundationPileEls.length) foundationPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
     }
 
     function onMouseMove(e) {
@@ -129,6 +153,10 @@
                 } else if (target.type === 'board') {
                     const slotTarget = target.slotEl || target.el;
                     cardsToMove.forEach(c => slotTarget && slotTarget.__appendCardFor && slotTarget.__appendCardFor(null, c));
+                } else if (target.type === 'trump') {
+                    cardsToMove.forEach(c => target.el.__appendCardFor && target.el.__appendCardFor(null, c));
+                } else if (target.type === 'foundation') {
+                    cardsToMove.forEach(c => target.el.__appendCardFor && target.el.__appendCardFor(null, c));
                 }
                 dragState.onMoved && dragState.onMoved(fromSide);
             } else if (fromSide.current) {
@@ -141,6 +169,10 @@
                 } else if (target.type === 'board') {
                     const slotTarget = target.slotEl || target.el;
                     slotTarget && slotTarget.__appendCardFor && slotTarget.__appendCardFor(null, card);
+                } else if (target.type === 'trump') {
+                    target.el.__appendCardFor && target.el.__appendCardFor(null, card);
+                } else if (target.type === 'foundation') {
+                    target.el.__appendCardFor && target.el.__appendCardFor(null, card);
                 }
                 dragState.onMoved && dragState.onMoved(fromSide);
             }
@@ -198,6 +230,8 @@
         playerDiscardEl = opts.playerDiscardEl;
         opponentDiscardEl = opts.opponentDiscardEl;
         boardSlotEls = Array.isArray(opts.boardSlotEls) ? opts.boardSlotEls : null;
+        trumpPileEls = Array.isArray(opts.trumpPileEls) ? opts.trumpPileEls : null;
+        foundationPileEls = Array.isArray(opts.foundationPileEls) ? opts.foundationPileEls : null;
     }
 
     global.DragDrop = { init, onMouseDown };
