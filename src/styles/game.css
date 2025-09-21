@@ -1,4 +1,4 @@
-.pile-container {
+.pile-horizontal {
     display: flex;
     flex-direction: row;
     position: absolute;
@@ -101,4 +101,49 @@
 .board-slot.drop-highlight,
 .board-slot .drop-highlight {
     outline-color: #4fc3f7;
+}
+
+.pile-vertical {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#trumpPiles {
+    left: 20px;
+}
+
+#foundationPiles {
+    right: 20px;
+}
+
+.small-pile {
+    width: 72px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.small-pile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.small-pile.trump {
+    border: 2px solid rgba(237, 201, 22, 0.15);
+}
+
+.small-pile.foundation {
+    border: 2px solid rgba(79, 195, 247, 0.12);
+}
+
+.small-pile.no-drag {
+    pointer-events: none;
 }

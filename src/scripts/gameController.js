@@ -48,7 +48,41 @@
             boardSlots.push(el);
         }
 
-        DragDrop.init({ playerDiscardEl: playerDiscard, opponentDiscardEl: opponentDiscard, boardSlotEls: boardSlots });
+        const trumpPileEls = [
+            document.getElementById('trumpPile0'),
+            document.getElementById('trumpPile1')
+        ];
+        const foundationPileEls = [
+            document.getElementById('foundationPile0'),
+            document.getElementById('foundationPile1'),
+            document.getElementById('foundationPile2'),
+            document.getElementById('foundationPile3')
+        ];
+
+        trumpPileEls.forEach(el => el && el.classList && el.classList.add('no-drag'));
+        foundationPileEls.forEach(el => el && el.classList && el.classList.add('no-drag'));
+        const trumpPiles = [[], []];
+        const foundationPiles = [[], [], [], []];
+
+        trumpPileEls.forEach((el, idx) => {
+            if (!el) return;
+            el.__appendCardFor = function (owner, card) {
+                trumpPiles[idx].push(card);
+                UI.renderSmallPile(el, trumpPiles[idx]);
+            };
+            UI.renderSmallPile(el, trumpPiles[idx]);
+        });
+
+        foundationPileEls.forEach((el, idx) => {
+            if (!el) return;
+            el.__appendCardFor = function (owner, card) {
+                foundationPiles[idx].push(card);
+                UI.renderSmallPile(el, foundationPiles[idx]);
+            };
+            UI.renderSmallPile(el, foundationPiles[idx]);
+        });
+
+        DragDrop.init({ playerDiscardEl: playerDiscard, opponentDiscardEl: opponentDiscard, boardSlotEls: boardSlots, trumpPileEls, foundationPileEls });
 
         const board = [[], [], [], [], [], []];
 

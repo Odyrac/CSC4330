@@ -20,13 +20,13 @@
 </head>
 
 <body>
-    <div id="playerPiles" class="pile-container">
+    <div id="playerPiles" class="pile-horizontal">
         <div class="pile facedown" id="playerFacedown"></div>
         <div class="pile discard" id="playerDiscard"></div>
         <div class="pile current" id="playerCurrent"></div>
     </div>
 
-    <div id="opponentPiles" class="pile-container">
+    <div id="opponentPiles" class="pile-horizontal">
         <div class="pile facedown" id="opponentFacedown"></div>
         <div class="pile discard" id="opponentDiscard"></div>
         <div class="pile current" id="opponentCurrent"></div>
@@ -39,6 +39,18 @@
         <div class="board-slot" id="boardSlot3"></div>
         <div class="board-slot" id="boardSlot4"></div>
         <div class="board-slot" id="boardSlot5"></div>
+    </div>
+
+    <div id="trumpPiles" class="pile-vertical">
+        <div class="small-pile trump" id="trumpPile0"></div>
+        <div class="small-pile trump" id="trumpPile1"></div>
+    </div>
+
+    <div id="foundationPiles" class="pile-vertical">
+        <div class="small-pile foundation" id="foundationPile0"></div>
+        <div class="small-pile foundation" id="foundationPile1"></div>
+        <div class="small-pile foundation" id="foundationPile2"></div>
+        <div class="small-pile foundation" id="foundationPile3"></div>
     </div>
 </body>
 
