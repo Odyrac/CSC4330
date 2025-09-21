@@ -20,7 +20,18 @@
 
         function moveToCurrent(side, facedownEl, currentEl, discardEl) {
             if (side.current) return;
-            if (side.facedown.length === 0) return;
+
+            if (side.facedown.length === 0) {
+                Deck.replenishFromDiscard(side);
+                UI.renderFacedown(facedownEl, side.facedown);
+                UI.renderDiscard(discardEl, side.discard);
+            }
+
+            if (side.facedown.length === 0 && side.discard.length === 0 && !side.current) {
+                alert('This player has no more cards, he/she wins!');
+                return;
+            }
+
             const card = side.facedown.shift();
             side.current = card;
             UI.renderFacedown(facedownEl, side.facedown);
@@ -31,7 +42,38 @@
         playerFacedown.addEventListener('click', () => moveToCurrent(player, playerFacedown, playerCurrent, playerDiscard));
         opponentFacedown.addEventListener('click', () => moveToCurrent(opponent, opponentFacedown, opponentCurrent, opponentDiscard));
 
-        DragDrop.init({ playerDiscardEl: playerDiscard, opponentDiscardEl: opponentDiscard });
+        const boardSlots = [];
+        for (let i = 0; i < 6; i++) {
+            const el = document.getElementById(`boardSlot${i}`);
+            boardSlots.push(el);
+        }
+
+        DragDrop.init({ playerDiscardEl: playerDiscard, opponentDiscardEl: opponentDiscard, boardSlotEls: boardSlots });
+
+        const board = [[], [], [], [], [], []];
+
+        function appendCardToBoard(slotIndex, owner, card) {
+            if (slotIndex == null || slotIndex < 0 || slotIndex >= board.length) return;
+            board[slotIndex].push(card);
+            UI.renderBoardSlot(boardSlots[slotIndex], board[slotIndex]);
+        }
+
+        boardSlots.forEach((slotEl, idx) => {
+            if (!slotEl) return;
+            slotEl.__appendCardFor = function (owner, card) { appendCardToBoard(idx, owner, card); };
+            slotEl.addEventListener('mousedown', (e) => {
+                const stack = board[idx];
+                if (!stack || stack.length === 0) return;
+                const tempSide = { current: stack[stack.length - 1] };
+                DragDrop.onMouseDown(e, tempSide, slotEl, (fromSide) => {
+                    if (!fromSide.current) {
+                        stack.pop();
+                    }
+                    UI.renderBoardSlot(slotEl, stack);
+                });
+            });
+            UI.renderBoardSlot(slotEl, []);
+        });
 
         function appendCardToPile(pileEl, owner, card) {
             if (owner === 'player') {
@@ -45,6 +87,28 @@
 
         playerDiscard.__appendCardFor = function (owner, card) { appendCardToPile(playerDiscard, owner, card); };
         opponentDiscard.__appendCardFor = function (owner, card) { appendCardToPile(opponentDiscard, owner, card); };
+
+        playerDiscard.addEventListener('mousedown', (e) => {
+            if (player.discard.length === 0) return;
+            const tempSide = { current: player.discard[player.discard.length - 1] };
+            DragDrop.onMouseDown(e, tempSide, playerDiscard, (fromSide) => {
+                if (!fromSide.current) {
+                    player.discard.pop();
+                }
+                UI.renderDiscard(playerDiscard, player.discard);
+            });
+        });
+
+        opponentDiscard.addEventListener('mousedown', (e) => {
+            if (opponent.discard.length === 0) return;
+            const tempSide = { current: opponent.discard[opponent.discard.length - 1] };
+            DragDrop.onMouseDown(e, tempSide, opponentDiscard, (fromSide) => {
+                if (!fromSide.current) {
+                    opponent.discard.pop();
+                }
+                UI.renderDiscard(opponentDiscard, opponent.discard);
+            });
+        });
 
         playerCurrent.addEventListener('mousedown', (e) => DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
             UI.renderCurrent(playerCurrent, fromSide.current);

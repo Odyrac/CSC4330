@@ -37,6 +37,19 @@
         return a;
     }
 
+    function replenishFromDiscard(side) {
+        if (!side) return;
+        if (Array.isArray(side.facedown) && side.facedown.length > 0) return;
+        if (!Array.isArray(side.discard) || side.discard.length <= 1) return;
+
+        const lastCard = side.discard.pop();
+
+        const newFacedown = shuffleDeck(side.discard.slice());
+        side.facedown = newFacedown.slice();
+
+        side.discard = [lastCard];
+    }
+
     function dealDeck(deck) {
         const hand1 = [];
         const hand2 = [];
@@ -47,5 +60,5 @@
         return { hand1, hand2 };
     }
 
-    global.Deck = { buildDeck, shuffleDeck, dealDeck };
+    global.Deck = { buildDeck, shuffleDeck, replenishFromDiscard, dealDeck };
 })(window);
