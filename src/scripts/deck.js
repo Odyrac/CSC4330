@@ -53,11 +53,14 @@
     function dealDeck(deck) {
         const hand1 = [];
         const hand2 = [];
+        const initialBoard = [];
+        const boardSize = 6;
+        initialBoard.push(...deck.splice(deck.length - boardSize, boardSize));
         for (let i = 0; i < deck.length; i++) {
             if (i % 2 === 0) hand1.push(deck[i]);
             else hand2.push(deck[i]);
         }
-        return { hand1, hand2 };
+        return { hand1, hand2, initialBoard };
     }
 
     global.Deck = { buildDeck, shuffleDeck, replenishFromDiscard, dealDeck };
