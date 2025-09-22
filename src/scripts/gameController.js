@@ -2,7 +2,7 @@
     function setupGame() {
         const deck = Deck.buildDeck();
         const shuffled = Deck.shuffleDeck(deck);
-        const { hand1, hand2 } = Deck.dealDeck(shuffled);
+        const { hand1, hand2, initialBoard } = Deck.dealDeck(shuffled);
 
         const playerFacedown = document.getElementById('playerFacedown');
         const playerCurrent = document.getElementById('playerCurrent');
@@ -89,8 +89,15 @@
         function appendCardToBoard(slotIndex, owner, card) {
             if (slotIndex == null || slotIndex < 0 || slotIndex >= board.length) return;
             board[slotIndex].push(card);
-            UI.renderBoardSlot(boardSlots[slotIndex], board[slotIndex]);
+            const slotEl = boardSlots[slotIndex];
+            if (slotEl) {
+                UI.renderBoardSlot(slotEl, board[slotIndex]);
+            }
         }
+
+        initialBoard.forEach((card, idx) => {
+            appendCardToBoard(idx, 'board', card);
+        });
 
         boardSlots.forEach((slotEl, idx) => {
             if (!slotEl) return;
@@ -137,7 +144,7 @@
                     UI.renderBoardSlot(slotEl, stack);
                 });
             });
-            UI.renderBoardSlot(slotEl, []);
+            UI.renderBoardSlot(slotEl, board[idx]);
         });
 
         function appendCardToPile(pileEl, owner, card) {
