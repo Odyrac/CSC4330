@@ -8,7 +8,7 @@
 
     function createCloneImage(img) {
         const clone = img.cloneNode(true);
-        clone.style.position = 'absolute';
+        clone.style.position = 'fixed';
         clone.style.pointerEvents = 'none';
         clone.classList.add('dragging-image');
         document.body.appendChild(clone);
@@ -20,7 +20,7 @@
         const width = 100;
         const height = 140 + (Math.max(0, stack.length - 1) * offsetY);
         const wrapper = document.createElement('div');
-        wrapper.style.position = 'absolute';
+        wrapper.style.position = 'fixed';
         wrapper.style.pointerEvents = 'none';
         wrapper.classList.add('dragging-image-stack');
         wrapper.style.width = width + 'px';
@@ -49,8 +49,10 @@
         const rect = clone.getBoundingClientRect ? clone.getBoundingClientRect() : { width: 100, height: 140 };
         const w = rect.width || 100;
         const h = rect.height || 140;
-        clone.style.left = (pageX - w / 2) + 'px';
-        clone.style.top = (pageY - h / 2) + 'px';
+        const clientX = (typeof pageX === 'number') ? pageX - (window.pageXOffset || document.documentElement.scrollLeft || 0) : 0;
+        const clientY = (typeof pageY === 'number') ? pageY - (window.pageYOffset || document.documentElement.scrollTop || 0) : 0;
+        clone.style.left = Math.max(0, clientX - w / 2) + 'px';
+        clone.style.top = Math.max(0, clientY - h / 2) + 'px';
         clone.style.zIndex = 9999;
     }
 

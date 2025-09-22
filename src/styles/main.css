@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Signika+Negative:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Molle&family=Paytone+One&display=swap');
 
 body {
     background-color: #2E2C39;
@@ -17,9 +18,12 @@ body {
     color: #585858;
     margin-top: -10px;
     margin-bottom: 50px;
+    font-family: 'Paytone One', sans-serif;
+    font-size: 48px;
 }
 
 #banner {
-    width: 300px;
+    width: 360px;
     pointer-events: none;
+    margin-top: -24px;
 }
