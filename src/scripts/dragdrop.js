@@ -25,7 +25,6 @@
         wrapper.classList.add('dragging-image-stack');
         wrapper.style.width = width + 'px';
         wrapper.style.height = height + 'px';
-        wrapper.style.pointerEvents = 'none';
         for (let i = 0; i < stack.length; i++) {
             const card = stack[i];
             const img = document.createElement('img');
@@ -69,8 +68,7 @@
                         if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return { type: 'board', el: slotEl, slotEl: slotEl, cardEl: last, index: i };
                         continue;
                     }
-                } catch (err) {
-                }
+                } catch (err) { }
                 const rSlot = slotEl.getBoundingClientRect();
                 if (x >= rSlot.left && x <= rSlot.right && y >= rSlot.top && y <= rSlot.bottom) return { type: 'board', el: slotEl, slotEl: slotEl, index: i };
             }
@@ -109,9 +107,7 @@
                 if (!slotEl) return;
                 slotEl.classList && slotEl.classList.remove('drop-highlight');
                 const cards = slotEl.querySelectorAll && slotEl.querySelectorAll('.board-card');
-                if (cards && cards.length) {
-                    cards.forEach(c => c.classList && c.classList.remove('drop-highlight'));
-                }
+                if (cards && cards.length) cards.forEach(c => c.classList && c.classList.remove('drop-highlight'));
             });
         }
         if (trumpPileEls && trumpPileEls.length) trumpPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
@@ -125,7 +121,16 @@
 
     function clearHighlight() {
         [playerDiscardEl, opponentDiscardEl].forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
-        if (boardSlotEls && boardSlotEls.length) boardSlotEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
+        if (boardSlotEls && boardSlotEls.length) {
+            boardSlotEls.forEach(slotEl => {
+                if (!slotEl) return;
+                slotEl.classList && slotEl.classList.remove('drop-highlight');
+                try {
+                    const cards = slotEl.querySelectorAll && slotEl.querySelectorAll('.board-card');
+                    if (cards && cards.length) cards.forEach(c => c.classList && c.classList.remove('drop-highlight'));
+                } catch (err) { }
+            });
+        }
         if (trumpPileEls && trumpPileEls.length) trumpPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
         if (foundationPileEls && foundationPileEls.length) foundationPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
     }
@@ -144,43 +149,63 @@
         const target = getDropTargetAt(e.clientX, e.clientY);
         const fromSide = dragState.side;
 
+        function topOf(el) {
+            try { return Array.isArray(el && el.__cards) && el.__cards.length ? el.__cards[el.__cards.length - 1] : null; } catch (err) { return null; }
+        }
+
         if (target && fromSide) {
             if (fromSide.stack && Array.isArray(fromSide.stack) && fromSide.stack.length > 0) {
                 const cardsToMove = fromSide.stack.slice();
-                fromSide.movedCount = cardsToMove.length;
-                if (target.type === 'player') {
-                    cardsToMove.forEach(c => target.el.__appendCardFor && target.el.__appendCardFor('player', c));
-                } else if (target.type === 'opponent') {
-                    cardsToMove.forEach(c => target.el.__appendCardFor && target.el.__appendCardFor('opponent', c));
-                } else if (target.type === 'board') {
+                let movedCountLocal = 0;
+                if (target.type === 'board') {
                     const slotTarget = target.slotEl || target.el;
-                    cardsToMove.forEach(c => slotTarget && slotTarget.__appendCardFor && slotTarget.__appendCardFor(null, c));
-                } else if (target.type === 'trump') {
-                    cardsToMove.forEach(c => target.el.__appendCardFor && target.el.__appendCardFor(null, c));
-                } else if (target.type === 'foundation') {
-                    cardsToMove.forEach(c => target.el.__appendCardFor && target.el.__appendCardFor(null, c));
+                    let topCard = topOf(slotTarget);
+                    for (let i = 0; i < cardsToMove.length; i++) {
+                        const c = cardsToMove[i];
+                        const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: c, cardTo: topCard, destinationType: 'board' }) : { allowed: true };
+                        if (!res.allowed) { clearHighlight(); movedCountLocal = 0; break; }
+                        slotTarget && slotTarget.__appendCardFor && slotTarget.__appendCardFor(null, c);
+                        movedCountLocal++;
+                        topCard = c;
+                    }
+                } else {
+                    let top = topOf(target.el);
+                    for (let i = 0; i < cardsToMove.length; i++) {
+                        const c = cardsToMove[i];
+                        const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: c, cardTo: top, destinationType: target.type }) : { allowed: true };
+                        if (!res.allowed) { clearHighlight(); movedCountLocal = 0; break; }
+                        const ownerArg = (target.type === 'player' || target.type === 'opponent') ? target.type : null;
+                        target.el.__appendCardFor && target.el.__appendCardFor(ownerArg, c);
+                        movedCountLocal++;
+                        top = c;
+                    }
                 }
+                fromSide.movedCount = movedCountLocal;
                 dragState.onMoved && dragState.onMoved(fromSide);
             } else if (fromSide.current) {
                 const card = fromSide.current;
-                fromSide.current = null;
-                if (target.type === 'player') {
-                    target.el.__appendCardFor && target.el.__appendCardFor('player', card);
-                } else if (target.type === 'opponent') {
-                    target.el.__appendCardFor && target.el.__appendCardFor('opponent', card);
-                } else if (target.type === 'board') {
+                let moved = false;
+                if (target.type === 'board') {
                     const slotTarget = target.slotEl || target.el;
-                    slotTarget && slotTarget.__appendCardFor && slotTarget.__appendCardFor(null, card);
-                } else if (target.type === 'trump') {
-                    target.el.__appendCardFor && target.el.__appendCardFor(null, card);
-                } else if (target.type === 'foundation') {
-                    target.el.__appendCardFor && target.el.__appendCardFor(null, card);
+                    const topCard = topOf(slotTarget);
+                    const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: card, cardTo: topCard, destinationType: 'board' }) : { allowed: true };
+                    if (!res.allowed) { clearHighlight(); }
+                    else { slotTarget && slotTarget.__appendCardFor && slotTarget.__appendCardFor(null, card); moved = true; }
+                } else {
+                    const top = topOf(target.el);
+                    const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: card, cardTo: top, destinationType: target.type }) : { allowed: true };
+                    if (!res.allowed) { clearHighlight(); }
+                    else { const ownerArg = (target.type === 'player' || target.type === 'opponent') ? target.type : null; target.el.__appendCardFor && target.el.__appendCardFor(ownerArg, card); moved = true; }
+                }
+
+                if (moved) {
+                    fromSide.current = null;
                 }
                 dragState.onMoved && dragState.onMoved(fromSide);
             }
         }
 
-        if (dragState.cloneEl && dragState.cloneEl.parentNode) dragState.cloneEl.parentNode.removeChild(dragState.cloneEl);
+        if (dragState && dragState.cloneEl && dragState.cloneEl.parentNode) dragState.cloneEl.parentNode.removeChild(dragState.cloneEl);
         dragState = null;
         clearHighlight();
     }
@@ -195,14 +220,12 @@
                 for (let i = imgs.length - 1; i >= 0; i--) {
                     const el = imgs[i];
                     if (side.current && side.current.id && el.src && el.src.indexOf(side.current.id) !== -1) {
-                        sourceImg = el;
-                        break;
+                        sourceImg = el; break;
                     }
                 }
                 if (!sourceImg) sourceImg = imgs[imgs.length - 1];
             }
-        } catch (err) {
-        }
+        } catch (err) { }
 
         if (side.stack && Array.isArray(side.stack) && side.stack.length > 0) {
             const clone = createStackClone(side.stack);

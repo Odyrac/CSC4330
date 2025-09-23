@@ -147,3 +147,15 @@
 .small-pile.no-drag {
     pointer-events: none;
 }
+
+#turnIndicator {
+    position: fixed;
+    left: 12px;
+    top: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #F2F2F2;
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-size: 14px;
+    z-index: 2000;
+}

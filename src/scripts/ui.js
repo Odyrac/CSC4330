@@ -70,5 +70,13 @@
         container.appendChild(img);
     }
 
-    global.UI = { renderFacedown, renderCurrent, renderDiscard, renderBoardSlot, renderSmallPile };
+    function renderTurnIndicator(container, turn) {
+        let el = container;
+        if (typeof container === 'string') el = document.getElementById(container);
+        if (!el) return;
+        el.textContent = turn === 'opponent' ? "Opponent's turn" : "Player's turn";
+        el.setAttribute('data-turn', turn);
+    }
+
+    global.UI = { renderFacedown, renderCurrent, renderDiscard, renderBoardSlot, renderSmallPile, renderTurnIndicator };
 })(window);

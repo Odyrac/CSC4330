@@ -15,10 +15,39 @@
         const player = { facedown: hand1.slice(), current: null, discard: [] };
         const opponent = { facedown: hand2.slice(), current: null, discard: [] };
 
+        const gameState = {
+            currentPlayerId: 'player',
+            players: {
+                player: player,
+                opponent: opponent
+            },
+            board: [[], [], [], [], [], []],
+            trumpPiles: [[], []],
+            foundationPiles: [[], [], [], []]
+        };
+
+        try { window.GameState = gameState; } catch (e) { }
+
+        function getCurrentTurn() { return gameState.currentPlayerId; }
+
+        function setTurn(turn) {
+            if (turn !== 'player' && turn !== 'opponent') return;
+            gameState.currentPlayerId = turn;
+            try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', gameState.currentPlayerId); } catch (e) { }
+        }
+
         UI.renderFacedown(playerFacedown, player.facedown);
         UI.renderFacedown(opponentFacedown, opponent.facedown);
+        try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', getCurrentTurn()); } catch (e) { }
 
         function moveToCurrent(side, facedownEl, currentEl, discardEl) {
+            const owner = (side === player) ? 'player' : (side === opponent) ? 'opponent' : null;
+            if (owner && getCurrentTurn() !== owner) {
+                const msg = "It's not your turn to draw.";
+                if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                else alert(msg);
+                return;
+            }
             if (side.current) return;
 
             if (side.facedown.length === 0) {
@@ -28,7 +57,9 @@
             }
 
             if (side.facedown.length === 0 && side.discard.length === 0 && !side.current) {
-                alert('This player has no more cards, he/she wins!');
+                const msg = 'This player has no more cards, he/she wins!';
+                if (window.Toast && window.Toast.show) window.Toast.show(msg, 4000);
+                else alert(msg);
                 return;
             }
 
@@ -61,8 +92,8 @@
 
         trumpPileEls.forEach(el => el && el.classList && el.classList.add('no-drag'));
         foundationPileEls.forEach(el => el && el.classList && el.classList.add('no-drag'));
-        const trumpPiles = [[], []];
-        const foundationPiles = [[], [], [], []];
+        const trumpPiles = gameState.trumpPiles;
+        const foundationPiles = gameState.foundationPiles;
 
         trumpPileEls.forEach((el, idx) => {
             if (!el) return;
@@ -70,6 +101,7 @@
                 trumpPiles[idx].push(card);
                 UI.renderSmallPile(el, trumpPiles[idx]);
             };
+            el.__cards = trumpPiles[idx];
             UI.renderSmallPile(el, trumpPiles[idx]);
         });
 
@@ -79,12 +111,13 @@
                 foundationPiles[idx].push(card);
                 UI.renderSmallPile(el, foundationPiles[idx]);
             };
+            el.__cards = foundationPiles[idx];
             UI.renderSmallPile(el, foundationPiles[idx]);
         });
 
         DragDrop.init({ playerDiscardEl: playerDiscard, opponentDiscardEl: opponentDiscard, boardSlotEls: boardSlots, trumpPileEls, foundationPileEls });
 
-        const board = [[], [], [], [], [], []];
+        const board = gameState.board;
 
         function appendCardToBoard(slotIndex, owner, card) {
             if (slotIndex == null || slotIndex < 0 || slotIndex >= board.length) return;
@@ -102,6 +135,7 @@
         boardSlots.forEach((slotEl, idx) => {
             if (!slotEl) return;
             slotEl.__appendCardFor = function (owner, card) { appendCardToBoard(idx, owner, card); };
+            slotEl.__cards = board[idx];
             slotEl.addEventListener('mousedown', (e) => {
                 const stack = board[idx];
                 if (!stack || stack.length === 0) return;
@@ -151,14 +185,23 @@
             if (owner === 'player') {
                 player.discard.push(card);
                 UI.renderDiscard(pileEl, player.discard);
+                if (getCurrentTurn() === 'player') {
+                    setTurn('opponent');
+                }
             } else if (owner === 'opponent') {
                 opponent.discard.push(card);
                 UI.renderDiscard(pileEl, opponent.discard);
+                if (getCurrentTurn() === 'opponent') {
+                    setTurn('player');
+                }
             }
         }
 
         playerDiscard.__appendCardFor = function (owner, card) { appendCardToPile(playerDiscard, owner, card); };
         opponentDiscard.__appendCardFor = function (owner, card) { appendCardToPile(opponentDiscard, owner, card); };
+
+        playerDiscard.__cards = player.discard;
+        opponentDiscard.__cards = opponent.discard;
 
         playerDiscard.addEventListener('mousedown', (e) => {
             if (player.discard.length === 0) return;
