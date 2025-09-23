@@ -157,12 +157,13 @@
             if (fromSide.stack && Array.isArray(fromSide.stack) && fromSide.stack.length > 0) {
                 const cardsToMove = fromSide.stack.slice();
                 let movedCountLocal = 0;
+                const isMultiple = Array.isArray(cardsToMove) && cardsToMove.length > 1;
                 if (target.type === 'board') {
                     const slotTarget = target.slotEl || target.el;
                     let topCard = topOf(slotTarget);
                     for (let i = 0; i < cardsToMove.length; i++) {
                         const c = cardsToMove[i];
-                        const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: c, cardTo: topCard, destinationType: 'board' }) : { allowed: true };
+                        const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: c, cardTo: topCard, destinationType: 'board', moveType: isMultiple ? 'multiple' : 'unique' }) : { allowed: true };
                         if (!res.allowed) { clearHighlight(); movedCountLocal = 0; break; }
                         slotTarget && slotTarget.__appendCardFor && slotTarget.__appendCardFor(null, c);
                         movedCountLocal++;
@@ -172,7 +173,7 @@
                     let top = topOf(target.el);
                     for (let i = 0; i < cardsToMove.length; i++) {
                         const c = cardsToMove[i];
-                        const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: c, cardTo: top, destinationType: target.type }) : { allowed: true };
+                        const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: c, cardTo: top, destinationType: target.type, moveType: isMultiple ? 'multiple' : 'unique' }) : { allowed: true };
                         if (!res.allowed) { clearHighlight(); movedCountLocal = 0; break; }
                         const ownerArg = (target.type === 'player' || target.type === 'opponent') ? target.type : null;
                         target.el.__appendCardFor && target.el.__appendCardFor(ownerArg, c);
@@ -188,12 +189,12 @@
                 if (target.type === 'board') {
                     const slotTarget = target.slotEl || target.el;
                     const topCard = topOf(slotTarget);
-                    const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: card, cardTo: topCard, destinationType: 'board' }) : { allowed: true };
+                    const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: card, cardTo: topCard, destinationType: 'board', moveType: 'unique' }) : { allowed: true };
                     if (!res.allowed) { clearHighlight(); }
                     else { slotTarget && slotTarget.__appendCardFor && slotTarget.__appendCardFor(null, card); moved = true; }
                 } else {
                     const top = topOf(target.el);
-                    const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: card, cardTo: top, destinationType: target.type }) : { allowed: true };
+                    const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: card, cardTo: top, destinationType: target.type, moveType: 'unique' }) : { allowed: true };
                     if (!res.allowed) { clearHighlight(); }
                     else { const ownerArg = (target.type === 'player' || target.type === 'opponent') ? target.type : null; target.el.__appendCardFor && target.el.__appendCardFor(ownerArg, card); moved = true; }
                 }
