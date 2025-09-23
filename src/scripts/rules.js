@@ -26,6 +26,11 @@
 
         const gs = (typeof window !== 'undefined' && window.GameState) ? window.GameState : null;
 
+        // Don't show a message if the card hasn't moved
+        if (cardFrom === cardTo) {
+            return { allowed: false };
+        }
+
         // Current card can always be moved to player's own discard
         if (gs.players[gs.currentPlayerId].current === cardFrom && destinationType === gs.currentPlayerId) {
             return { allowed: true };
