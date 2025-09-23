@@ -151,6 +151,8 @@
                     if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
                     else alert(msg);
                     return { allowed: false };
+                } else {
+                    return { allowed: true };
                 }
             } else if (!isTrump(cardFrom) && isTrump(cardTo)) {
                 const msg = "A non-trump card cannot be placed on a trump card.";
@@ -158,28 +160,27 @@
                 else alert(msg);
                 return { allowed: false };
             }
-            return { allowed: true };
         }
 
-        const cFrom = colorOf(cardFrom);
-        const cTo = colorOf(cardTo);
+        if (cardTo) {
+            const cFrom = colorOf(cardFrom);
+            const cTo = colorOf(cardTo);
 
-        if (!cardTo) return { allowed: true };
+            if (!oppositeColor(cFrom, cTo)) {
+                const msg = "Cards must be placed on opposite colors.";
+                if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                else alert(msg);
+                return { allowed: false };
+            }
 
-        if (!oppositeColor(cFrom, cTo)) {
-            const msg = "Cards must be placed on opposite colors.";
-            if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
-            else alert(msg);
-            return { allowed: false };
-        }
+            const diff = rankDifference(cardFrom.rank, cardTo.rank);
 
-        const diff = rankDifference(cardFrom.rank, cardTo.rank);
-
-        if (diff !== -1) {
-            const msg = "Cards must be placed in descending order.";
-            if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
-            else alert(msg);
-            return { allowed: false };
+            if (diff !== -1) {
+                const msg = "Cards must be placed in descending order.";
+                if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                else alert(msg);
+                return { allowed: false };
+            }
         }
 
         return { allowed: true };
