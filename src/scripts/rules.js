@@ -108,6 +108,13 @@
 
         // Foundation piles
         if (destinationType === 'foundation') {
+            if (moveType === 'multiple') {
+                const msg = "You can only move one card at a time to foundation piles.";
+                if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                else alert(msg);
+                return { allowed: false };
+            }
+
             if (isTrump(cardFrom)) {
                 const msg = "Only non-trump cards can be moved to foundation piles.";
                 if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
