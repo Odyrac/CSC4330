@@ -24,3 +24,62 @@
     height: 28px;
     margin-right: 10px;
 }
+
+#toast-container {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 100000;
+    pointer-events: none;
+}
+
+.toast {
+    min-width: 260px;
+    max-width: 360px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #F2F2F2;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 14px 16px 18px 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    font-size: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    pointer-events: auto;
+    transform: translateY(12px) scale(0.98);
+    opacity: 0;
+    transition: transform 260ms cubic-bezier(.2, .9, .2, 1), opacity 260ms ease;
+    position: relative;
+}
+
+.toast-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.toast-progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.12);
+    transition: width 3s linear;
+}
+
+.toast.show {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.toast.hide {
+    transform: translateY(8px) scale(0.98);
+    opacity: 0;
+}
