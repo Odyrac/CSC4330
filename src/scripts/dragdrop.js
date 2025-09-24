@@ -55,6 +55,24 @@
         clone.style.zIndex = 9999;
     }
 
+    function getEventCoords(e) {
+        let clientX = 0, clientY = 0, pageX = 0, pageY = 0;
+        if (!e) return { clientX, clientY, pageX, pageY };
+        const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+        if (t) {
+            clientX = typeof t.clientX === 'number' ? t.clientX : 0;
+            clientY = typeof t.clientY === 'number' ? t.clientY : 0;
+            pageX = typeof t.pageX === 'number' ? t.pageX : (clientX + (window.pageXOffset || document.documentElement.scrollLeft || 0));
+            pageY = typeof t.pageY === 'number' ? t.pageY : (clientY + (window.pageYOffset || document.documentElement.scrollTop || 0));
+            return { clientX, clientY, pageX, pageY };
+        }
+        clientX = typeof e.clientX === 'number' ? e.clientX : 0;
+        clientY = typeof e.clientY === 'number' ? e.clientY : 0;
+        pageX = typeof e.pageX === 'number' ? e.pageX : (clientX + (window.pageXOffset || document.documentElement.scrollLeft || 0));
+        pageY = typeof e.pageY === 'number' ? e.pageY : (clientY + (window.pageYOffset || document.documentElement.scrollTop || 0));
+        return { clientX, clientY, pageX, pageY };
+    }
+
     function getDropTargetAt(x, y) {
         if (boardSlotEls && boardSlotEls.length) {
             for (let i = 0; i < boardSlotEls.length; i++) {
@@ -135,19 +153,42 @@
         if (foundationPileEls && foundationPileEls.length) foundationPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
     }
 
-    function onMouseMove(e) {
-        if (!dragState) return;
-        moveClone(e.pageX, e.pageY);
-        highlightDropTarget(e.clientX, e.clientY);
-    }
-
-    function onMouseUp(e) {
-        if (!dragState) return;
+    function _moveHandlersRemoveAll() {
         window.removeEventListener('mousemove', onMouseMove);
         window.removeEventListener('mouseup', onMouseUp);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+        window.removeEventListener('touchmove', onTouchMove);
+        window.removeEventListener('touchend', onTouchEnd);
+        window.removeEventListener('touchcancel', onTouchEnd);
+    }
 
-        const target = getDropTargetAt(e.clientX, e.clientY);
-        const fromSide = dragState.side;
+    function onMouseMove(e) {
+        if (!dragState) return;
+        const coords = getEventCoords(e);
+        moveClone(coords.pageX, coords.pageY);
+        highlightDropTarget(coords.clientX, coords.clientY);
+    }
+
+    function onPointerMove(e) {
+        if (!dragState) return;
+        const coords = getEventCoords(e);
+        moveClone(coords.pageX, coords.pageY);
+        highlightDropTarget(coords.clientX, coords.clientY);
+    }
+
+    function onTouchMove(e) {
+        if (!dragState) return;
+        try { e.preventDefault && e.preventDefault(); } catch (err) { }
+        const coords = getEventCoords(e);
+        moveClone(coords.pageX, coords.pageY);
+        highlightDropTarget(coords.clientX, coords.clientY);
+    }
+
+    function finishDragAt(clientX, clientY) {
+        const target = getDropTargetAt(clientX, clientY);
+        const fromSide = dragState && dragState.side;
 
         function topOf(el) {
             try { return Array.isArray(el && el.__cards) && el.__cards.length ? el.__cards[el.__cards.length - 1] : null; } catch (err) { return null; }
@@ -211,7 +252,29 @@
         clearHighlight();
     }
 
+    function onMouseUp(e) {
+        if (!dragState) return;
+        _moveHandlersRemoveAll();
+        const coords = getEventCoords(e);
+        finishDragAt(coords.clientX, coords.clientY);
+    }
+
+    function onPointerUp(e) {
+        if (!dragState) return;
+        _moveHandlersRemoveAll();
+        const coords = getEventCoords(e);
+        finishDragAt(coords.clientX, coords.clientY);
+    }
+
+    function onTouchEnd(e) {
+        if (!dragState) return;
+        _moveHandlersRemoveAll();
+        const coords = getEventCoords(e);
+        finishDragAt(coords.clientX, coords.clientY);
+    }
+
     function onMouseDown(e, side, currentEl, onMoved) {
+        if (dragState) return;
         if (!side.current && !(side.stack && side.stack.length)) return;
         e.preventDefault();
         let sourceImg = null;
@@ -231,9 +294,16 @@
         if (side.stack && Array.isArray(side.stack) && side.stack.length > 0) {
             const clone = createStackClone(side.stack);
             dragState = { side, currentEl, stack: side.stack.slice(), cloneEl: clone, onMoved };
-            moveClone(e.pageX, e.pageY);
+            const coords = getEventCoords(e);
+            moveClone(coords.pageX, coords.pageY);
             window.addEventListener('mousemove', onMouseMove);
             window.addEventListener('mouseup', onMouseUp);
+            window.addEventListener('pointermove', onPointerMove);
+            window.addEventListener('pointerup', onPointerUp);
+            window.addEventListener('pointercancel', onPointerUp);
+            window.addEventListener('touchmove', onTouchMove, { passive: false });
+            window.addEventListener('touchend', onTouchEnd);
+            window.addEventListener('touchcancel', onTouchEnd);
             return;
         }
 
@@ -247,9 +317,16 @@
         if (!sourceImg) return;
         const clone = createCloneImage(sourceImg);
         dragState = { side, currentEl, card: side.current, cloneEl: clone, onMoved };
-        moveClone(e.pageX, e.pageY);
+        const coords = getEventCoords(e);
+        moveClone(coords.pageX, coords.pageY);
         window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerUp);
+        window.addEventListener('touchmove', onTouchMove, { passive: false });
+        window.addEventListener('touchend', onTouchEnd);
+        window.addEventListener('touchcancel', onTouchEnd);
     }
 
     function init(opts) {
