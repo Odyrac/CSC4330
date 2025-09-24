@@ -178,6 +178,102 @@
                     UI.renderBoardSlot(slotEl, stack);
                 });
             });
+            slotEl.addEventListener && slotEl.addEventListener('pointerdown', (e) => {
+                const stack = board[idx];
+                if (!stack || stack.length === 0) return;
+                try {
+                    const cards = slotEl.querySelectorAll && slotEl.querySelectorAll('.board-card');
+                    if (cards && cards.length) {
+                        const firstCard = cards[0];
+                        const lastCard = cards[cards.length - 1];
+                        const actual = document.elementFromPoint(e.clientX, e.clientY);
+                        const clickedCard = actual && actual.closest && actual.closest('.board-card');
+                        if (clickedCard && clickedCard === lastCard) {
+                            const tempSide = { current: stack[stack.length - 1] };
+                            DragDrop.onMouseDown(e, tempSide, lastCard, (fromSide) => {
+                                if (!fromSide.current) {
+                                    stack.pop();
+                                }
+                                UI.renderBoardSlot(slotEl, stack);
+                            });
+                            e.preventDefault && e.preventDefault();
+                            return;
+                        }
+                        if (clickedCard && clickedCard === firstCard) {
+                            const tempSide = { stack: stack.slice() };
+                            DragDrop.onMouseDown(e, tempSide, firstCard, (fromSide) => {
+                                const moved = fromSide.movedCount || 0;
+                                for (let i = 0; i < moved; i++) {
+                                    stack.pop();
+                                }
+                                UI.renderBoardSlot(slotEl, stack);
+                            });
+                            e.preventDefault && e.preventDefault();
+                            return;
+                        }
+                        e.preventDefault && e.preventDefault();
+                        return;
+                    }
+                } catch (err) {
+                }
+                const tempSide = { current: stack[stack.length - 1] };
+                DragDrop.onMouseDown(e, tempSide, slotEl, (fromSide) => {
+                    if (!fromSide.current) {
+                        stack.pop();
+                    }
+                    UI.renderBoardSlot(slotEl, stack);
+                });
+                e.preventDefault && e.preventDefault();
+            });
+            slotEl.addEventListener && slotEl.addEventListener('touchstart', (e) => {
+                const t = (e.touches && e.touches[0]);
+                if (!t) return;
+                const stack = board[idx];
+                if (!stack || stack.length === 0) return;
+                try {
+                    const cards = slotEl.querySelectorAll && slotEl.querySelectorAll('.board-card');
+                    if (cards && cards.length) {
+                        const firstCard = cards[0];
+                        const lastCard = cards[cards.length - 1];
+                        const actual = document.elementFromPoint(t.clientX, t.clientY);
+                        const clickedCard = actual && actual.closest && actual.closest('.board-card');
+                        if (clickedCard && clickedCard === lastCard) {
+                            const tempSide = { current: stack[stack.length - 1] };
+                            DragDrop.onMouseDown(e, tempSide, lastCard, (fromSide) => {
+                                if (!fromSide.current) {
+                                    stack.pop();
+                                }
+                                UI.renderBoardSlot(slotEl, stack);
+                            });
+                            e.preventDefault && e.preventDefault();
+                            return;
+                        }
+                        if (clickedCard && clickedCard === firstCard) {
+                            const tempSide = { stack: stack.slice() };
+                            DragDrop.onMouseDown(e, tempSide, firstCard, (fromSide) => {
+                                const moved = fromSide.movedCount || 0;
+                                for (let i = 0; i < moved; i++) {
+                                    stack.pop();
+                                }
+                                UI.renderBoardSlot(slotEl, stack);
+                            });
+                            e.preventDefault && e.preventDefault();
+                            return;
+                        }
+                        e.preventDefault && e.preventDefault();
+                        return;
+                    }
+                } catch (err) {
+                }
+                const tempSide = { current: stack[stack.length - 1] };
+                DragDrop.onMouseDown(e, tempSide, slotEl, (fromSide) => {
+                    if (!fromSide.current) {
+                        stack.pop();
+                    }
+                    UI.renderBoardSlot(slotEl, stack);
+                });
+                e.preventDefault && e.preventDefault();
+            });
             UI.renderBoardSlot(slotEl, board[idx]);
         });
 
@@ -213,6 +309,30 @@
                 UI.renderDiscard(playerDiscard, player.discard);
             });
         });
+        playerDiscard.addEventListener && playerDiscard.addEventListener('pointerdown', (e) => {
+            if (player.discard.length === 0) return;
+            const tempSide = { current: player.discard[player.discard.length - 1] };
+            e.preventDefault && e.preventDefault();
+            e.stopPropagation && e.stopPropagation();
+            DragDrop.onMouseDown(e, tempSide, playerDiscard, (fromSide) => {
+                if (!fromSide.current) {
+                    player.discard.pop();
+                }
+                UI.renderDiscard(playerDiscard, player.discard);
+            });
+        });
+        playerDiscard.addEventListener && playerDiscard.addEventListener('touchstart', (e) => {
+            if (player.discard.length === 0) return;
+            const tempSide = { current: player.discard[player.discard.length - 1] };
+            e.preventDefault && e.preventDefault();
+            e.stopPropagation && e.stopPropagation();
+            DragDrop.onMouseDown(e, tempSide, playerDiscard, (fromSide) => {
+                if (!fromSide.current) {
+                    player.discard.pop();
+                }
+                UI.renderDiscard(playerDiscard, player.discard);
+            });
+        });
 
         opponentDiscard.addEventListener('mousedown', (e) => {
             if (opponent.discard.length === 0) return;
@@ -224,14 +344,66 @@
                 UI.renderDiscard(opponentDiscard, opponent.discard);
             });
         });
+        opponentDiscard.addEventListener && opponentDiscard.addEventListener('pointerdown', (e) => {
+            if (opponent.discard.length === 0) return;
+            const tempSide = { current: opponent.discard[opponent.discard.length - 1] };
+            e.preventDefault && e.preventDefault();
+            e.stopPropagation && e.stopPropagation();
+            DragDrop.onMouseDown(e, tempSide, opponentDiscard, (fromSide) => {
+                if (!fromSide.current) {
+                    opponent.discard.pop();
+                }
+                UI.renderDiscard(opponentDiscard, opponent.discard);
+            });
+        });
+        opponentDiscard.addEventListener && opponentDiscard.addEventListener('touchstart', (e) => {
+            if (opponent.discard.length === 0) return;
+            const tempSide = { current: opponent.discard[opponent.discard.length - 1] };
+            e.preventDefault && e.preventDefault();
+            e.stopPropagation && e.stopPropagation();
+            DragDrop.onMouseDown(e, tempSide, opponentDiscard, (fromSide) => {
+                if (!fromSide.current) {
+                    opponent.discard.pop();
+                }
+                UI.renderDiscard(opponentDiscard, opponent.discard);
+            });
+        });
 
         playerCurrent.addEventListener('mousedown', (e) => DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
             UI.renderCurrent(playerCurrent, fromSide.current);
         }));
+        playerCurrent.addEventListener && playerCurrent.addEventListener('pointerdown', (e) => {
+            e.preventDefault && e.preventDefault();
+            e.stopPropagation && e.stopPropagation();
+            DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
+                UI.renderCurrent(playerCurrent, fromSide.current);
+            });
+        });
+        playerCurrent.addEventListener && playerCurrent.addEventListener('touchstart', (e) => {
+            e.preventDefault && e.preventDefault();
+            e.stopPropagation && e.stopPropagation();
+            DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
+                UI.renderCurrent(playerCurrent, fromSide.current);
+            });
+        });
 
         opponentCurrent.addEventListener('mousedown', (e) => DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
             UI.renderCurrent(opponentCurrent, fromSide.current);
         }));
+        opponentCurrent.addEventListener && opponentCurrent.addEventListener('pointerdown', (e) => {
+            e.preventDefault && e.preventDefault();
+            e.stopPropagation && e.stopPropagation();
+            DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
+                UI.renderCurrent(opponentCurrent, fromSide.current);
+            });
+        });
+        opponentCurrent.addEventListener && opponentCurrent.addEventListener('touchstart', (e) => {
+            e.preventDefault && e.preventDefault();
+            e.stopPropagation && e.stopPropagation();
+            DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
+                UI.renderCurrent(opponentCurrent, fromSide.current);
+            });
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => setupGame());
