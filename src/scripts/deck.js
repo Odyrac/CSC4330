@@ -43,11 +43,14 @@
         if (!Array.isArray(side.discard) || side.discard.length <= 1) return;
 
         const lastCard = side.discard.pop();
+        const shuffled = shuffleDeck(side.discard.slice());
+        if (!Array.isArray(side.facedown)) side.facedown = [];
+        side.facedown.length = 0;
+        for (let i = 0; i < shuffled.length; i++) side.facedown.push(shuffled[i]);
 
-        const newFacedown = shuffleDeck(side.discard.slice());
-        side.facedown = newFacedown.slice();
-
-        side.discard = [lastCard];
+        if (!Array.isArray(side.discard)) side.discard = [];
+        side.discard.length = 0;
+        side.discard.push(lastCard);
     }
 
     function dealDeck(deck) {
