@@ -5,6 +5,7 @@
     let boardSlotEls = null;
     let trumpPileEls = null;
     let foundationPileEls = null;
+    let excusePileEl = null;
 
     function createCloneImage(img) {
         const clone = img.cloneNode(true);
@@ -114,6 +115,12 @@
                 if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return { type: 'foundation', el: el, index: i };
             }
         }
+        if (excusePileEl) {
+            try {
+                const r = excusePileEl.getBoundingClientRect();
+                if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return { type: 'excuse', el: excusePileEl };
+            } catch (err) { }
+        }
         return null;
     }
 
@@ -130,6 +137,7 @@
         }
         if (trumpPileEls && trumpPileEls.length) trumpPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
         if (foundationPileEls && foundationPileEls.length) foundationPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
+        if (excusePileEl && excusePileEl.classList) excusePileEl.classList.remove('drop-highlight');
         if (target && target.cardEl) {
             if (target.cardEl.classList) target.cardEl.classList.add('drop-highlight');
         } else if (target && target.el && target.el.classList) {
@@ -151,6 +159,7 @@
         }
         if (trumpPileEls && trumpPileEls.length) trumpPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
         if (foundationPileEls && foundationPileEls.length) foundationPileEls.forEach(el => el && el.classList && el.classList.remove('drop-highlight'));
+        if (excusePileEl && excusePileEl.classList) excusePileEl.classList.remove('drop-highlight');
     }
 
     function _moveHandlersRemoveAll() {
@@ -194,7 +203,7 @@
             try { return Array.isArray(el && el.__cards) && el.__cards.length ? el.__cards[el.__cards.length - 1] : null; } catch (err) { return null; }
         }
 
-        if (target && fromSide) {
+        if (target && fromSide && target.type !== 'excuse') {
             if (fromSide.stack && Array.isArray(fromSide.stack) && fromSide.stack.length > 0) {
                 const cardsToMove = fromSide.stack.slice();
                 let movedCountLocal = 0;
@@ -244,6 +253,191 @@
                     fromSide.current = null;
                 }
                 dragState.onMoved && dragState.onMoved(fromSide);
+            }
+        }
+
+        if (target && target.type === 'excuse' && fromSide) {
+            function findExcuseLocation() {
+                try {
+                    const gs = (typeof window !== 'undefined' && window.GameState) ? window.GameState : null;
+                    if (!gs) return null;
+                    // Board
+                    for (let i = 0; i < gs.board.length; i++) {
+                        const pile = gs.board[i];
+                        const idx = pile.findIndex(c => c && c.id === 'excuse');
+                        if (idx !== -1) return { type: 'board', pileIndex: i, pileRef: pile, index: idx };
+                    }
+                    // Trump
+                    for (let i = 0; i < gs.trumpPiles.length; i++) {
+                        const pile = gs.trumpPiles[i];
+                        const idx = pile.findIndex(c => c && c.id === 'excuse');
+                        if (idx !== -1) return { type: 'trump', pileIndex: i, pileRef: pile, index: idx };
+                    }
+                    // Foundation
+                    for (let i = 0; i < gs.foundationPiles.length; i++) {
+                        const pile = gs.foundationPiles[i];
+                        const idx = pile.findIndex(c => c && c.id === 'excuse');
+                        if (idx !== -1) return { type: 'foundation', pileIndex: i, pileRef: pile, index: idx };
+                    }
+                } catch (err) { }
+                return null;
+            }
+
+            const loc = findExcuseLocation();
+            if (!loc) {
+                clearHighlight();
+                const msg = "The excuse card cannot be replaced right now."
+                if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                else alert(msg);
+            } else {
+                const cardsToMove = fromSide.stack && Array.isArray(fromSide.stack) && fromSide.stack.length > 0 ? fromSide.stack.slice() : (fromSide.current ? [fromSide.current] : []);
+                const isMultiple = cardsToMove.length > 1;
+                const excuseCard = loc.pileRef[loc.index];
+                let allowedAll = true;
+                for (let i = 0; i < cardsToMove.length; i++) {
+                    const c = cardsToMove[i];
+                    const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: c, cardTo: null, destinationType: 'excuse', moveType: isMultiple ? 'multiple' : 'unique' }) : { allowed: true };
+                    if (!res.allowed) { allowedAll = false; break; }
+                }
+                if (!allowedAll) {
+                    clearHighlight();
+                } else {
+                    try {
+                        const movedCard = cardsToMove[0];
+
+                        function findCardLocation(card) {
+                            try {
+                                const gs = (typeof window !== 'undefined' && window.GameState) ? window.GameState : null;
+                                if (!gs) return null;
+                                // Board
+                                for (let i = 0; i < gs.board.length; i++) {
+                                    const pile = gs.board[i];
+                                    const idx = pile.findIndex(c => c === card);
+                                    if (idx !== -1) return { type: 'board', pileIndex: i, pileRef: pile, index: idx };
+                                }
+                                // Trump
+                                for (let i = 0; i < gs.trumpPiles.length; i++) {
+                                    const pile = gs.trumpPiles[i];
+                                    const idx = pile.findIndex(c => c === card);
+                                    if (idx !== -1) return { type: 'trump', pileIndex: i, pileRef: pile, index: idx };
+                                }
+                                // Foundation
+                                for (let i = 0; i < gs.foundationPiles.length; i++) {
+                                    const pile = gs.foundationPiles[i];
+                                    const idx = pile.findIndex(c => c === card);
+                                    if (idx !== -1) return { type: 'foundation', pileIndex: i, pileRef: pile, index: idx };
+                                }
+                            } catch (err) { }
+                            return null;
+                        }
+
+                        const origin = findCardLocation(movedCard);
+
+                        // Remove the moved card from its origin
+                        try {
+                            if (origin) {
+                                if (origin.type === 'board' || origin.type === 'trump' || origin.type === 'foundation') {
+                                    try { origin.pileRef.splice(origin.index, 1); } catch (err) { }
+                                } else if (origin.type === 'current') {
+                                    try {
+                                        if (window.GameState && window.GameState.players && typeof origin.owner === 'string') {
+                                            const gs = window.GameState;
+                                            const currentId = gs && gs.currentPlayerId;
+                                            if (origin.owner !== currentId) {
+                                                window.GameState.players[origin.owner].current = null;
+                                                try {
+                                                    const id = (origin.owner === 'player') ? 'playerCurrent' : (origin.owner === 'opponent' ? 'opponentCurrent' : null);
+                                                    if (id && window.UI && window.UI.renderCurrent) {
+                                                        const el = document.getElementById(id);
+                                                        el && window.UI.renderCurrent(el, null);
+                                                    }
+                                                } catch (err) { }
+                                            }
+                                        }
+                                    } catch (err) { }
+                                }
+                            }
+                        } catch (err) { }
+
+                        // Place the moved card into the location previously occupied by the excuse
+                        try { loc.pileRef[loc.index] = movedCard; } catch (err) { }
+
+                        // Render the origin pile if needed
+                        try {
+                            if (origin && origin.type === 'board') {
+                                const slotEl = (boardSlotEls && boardSlotEls[origin.pileIndex]) ? boardSlotEls[origin.pileIndex] : null;
+                                slotEl && window.UI && window.UI.renderBoardSlot && window.UI.renderBoardSlot(slotEl, origin.pileRef);
+                            } else if (origin && origin.type === 'trump') {
+                                const el = (trumpPileEls && trumpPileEls[origin.pileIndex]) ? trumpPileEls[origin.pileIndex] : null;
+                                el && window.UI && window.UI.renderSmallPile && window.UI.renderSmallPile(el, origin.pileRef);
+                            } else if (origin && origin.type === 'foundation') {
+                                const el = (foundationPileEls && foundationPileEls[origin.pileIndex]) ? foundationPileEls[origin.pileIndex] : null;
+                                el && window.UI && window.UI.renderSmallPile && window.UI.renderSmallPile(el, origin.pileRef);
+                            }
+                        } catch (err) { }
+
+                        // Make the excuse the current card of the player whose turn it is
+                        try {
+                            const gs = (typeof window !== 'undefined' && window.GameState) ? window.GameState : null;
+                            if (gs && gs.currentPlayerId && gs.players && gs.players[gs.currentPlayerId]) {
+                                gs.players[gs.currentPlayerId].current = excuseCard;
+                                try {
+                                    const elId = (gs.currentPlayerId === 'player') ? 'playerCurrent' : (gs.currentPlayerId === 'opponent' ? 'opponentCurrent' : null);
+                                    if (elId && window.UI && window.UI.renderCurrent) {
+                                        const el = document.getElementById(elId);
+                                        el && window.UI.renderCurrent(el, gs.players[gs.currentPlayerId].current);
+                                    }
+                                } catch (err) { }
+                            }
+                        } catch (err) { }
+
+                        // Render the pile where the excuse was
+                        try {
+                            if (loc.type === 'board') {
+                                const slotEl = (boardSlotEls && boardSlotEls[loc.pileIndex]) ? boardSlotEls[loc.pileIndex] : null;
+                                slotEl && window.UI && window.UI.renderBoardSlot && window.UI.renderBoardSlot(slotEl, loc.pileRef);
+                            } else if (loc.type === 'trump') {
+                                const el = (trumpPileEls && trumpPileEls[loc.pileIndex]) ? trumpPileEls[loc.pileIndex] : null;
+                                el && window.UI && window.UI.renderSmallPile && window.UI.renderSmallPile(el, loc.pileRef);
+                            } else if (loc.type === 'foundation') {
+                                const el = (foundationPileEls && foundationPileEls[loc.pileIndex]) ? foundationPileEls[loc.pileIndex] : null;
+                                el && window.UI && window.UI.renderSmallPile && window.UI.renderSmallPile(el, loc.pileRef);
+                            }
+                        } catch (err) { }
+
+                        if (fromSide && fromSide.current !== undefined) {
+                            try {
+                                const gs = (typeof window !== 'undefined' && window.GameState) ? window.GameState : null;
+                                const currentId = gs && gs.currentPlayerId;
+                                if (gs && gs.players) {
+                                    if (fromSide === gs.players.player) {
+                                        if (currentId !== 'player') {
+                                            gs.players.player.current = null;
+                                            try { const el = document.getElementById('playerCurrent'); el && window.UI && window.UI.renderCurrent && window.UI.renderCurrent(el, null); } catch (e) { }
+                                        }
+                                    } else if (fromSide === gs.players.opponent) {
+                                        if (currentId !== 'opponent') {
+                                            gs.players.opponent.current = null;
+                                            try { const el = document.getElementById('opponentCurrent'); el && window.UI && window.UI.renderCurrent && window.UI.renderCurrent(el, null); } catch (e) { }
+                                        }
+                                    } else {
+                                        try { fromSide.current = null; } catch (e) { }
+                                    }
+                                }
+                            } catch (err) { }
+                        }
+
+                        if (dragState && dragState.onMoved) {
+                            dragState.onMoved(fromSide);
+                        }
+
+                        if (dragState && dragState.cloneEl && dragState.cloneEl.parentNode) dragState.cloneEl.parentNode.removeChild(dragState.cloneEl);
+                        dragState = null;
+                        clearHighlight();
+                    } catch (err) {
+                        clearHighlight();
+                    }
+                }
             }
         }
 
@@ -335,6 +529,7 @@
         boardSlotEls = Array.isArray(opts.boardSlotEls) ? opts.boardSlotEls : null;
         trumpPileEls = Array.isArray(opts.trumpPileEls) ? opts.trumpPileEls : null;
         foundationPileEls = Array.isArray(opts.foundationPileEls) ? opts.foundationPileEls : null;
+        excusePileEl = opts.excusePileEl || null;
     }
 
     global.DragDrop = { init, onMouseDown };

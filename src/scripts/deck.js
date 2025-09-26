@@ -19,11 +19,18 @@
         trumps.forEach(rank => {
             deck.push({
                 id: `t${rank}`,
-                suit: 'trump',
+                suit: undefined,
                 rank: rank,
-                color: 'trump',
+                color: undefined,
                 type: 'trump'
             });
+        });
+        deck.push({
+            id: 'excuse',
+            suit: undefined,
+            rank: undefined,
+            color: undefined,
+            type: undefined
         });
         return deck;
     }

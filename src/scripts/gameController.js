@@ -90,6 +90,8 @@
             document.getElementById('foundationPile3')
         ];
 
+        const excusePileEl = document.getElementById('excusePile');
+
         trumpPileEls.forEach(el => el && el.classList && el.classList.add('no-drag'));
         foundationPileEls.forEach(el => el && el.classList && el.classList.add('no-drag'));
         const trumpPiles = gameState.trumpPiles;
@@ -115,7 +117,7 @@
             UI.renderSmallPile(el, foundationPiles[idx]);
         });
 
-        DragDrop.init({ playerDiscardEl: playerDiscard, opponentDiscardEl: opponentDiscard, boardSlotEls: boardSlots, trumpPileEls, foundationPileEls });
+        DragDrop.init({ playerDiscardEl: playerDiscard, opponentDiscardEl: opponentDiscard, boardSlotEls: boardSlots, trumpPileEls, foundationPileEls, excusePileEl });
 
         const board = gameState.board;
 
