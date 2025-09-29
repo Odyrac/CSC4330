@@ -1,4 +1,6 @@
 (function (global) {
+    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K'];
+
     function isTrump(card) {
         return card && card.type === 'trump';
     }
@@ -15,7 +17,6 @@
     }
 
     function rankDifference(r1, r2) {
-        const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K'];
         const i1 = ranks.indexOf(r1);
         const i2 = ranks.indexOf(r2);
         if (i1 === -1 || i2 === -1) return null;
@@ -61,7 +62,7 @@
         }
 
         // If the opponent discard is empty and the player is trying to move a card there, disallow
-        if (!cardTo && destinationType !== 'board' && destinationType !== 'trump' && destinationType !== 'foundation') {
+        if (!cardTo && destinationType !== 'board' && destinationType !== 'trump' && destinationType !== 'foundation' && destinationType !== 'excuse') {
             const msg = "You cannot move a card here.";
             if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
             else alert(msg);
@@ -81,6 +82,178 @@
                 const msg = "You can only move the entire pile.";
                 if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
                 else alert(msg);
+                return { allowed: false };
+            }
+        }
+
+        // Excuse card
+        // Disallow moving the excuse card to any empty pile
+        if (!cardTo && cardFrom.id === 'excuse') {
+            let msg = "";
+            if (destinationType === 'excuse') {
+                msg = "The excuse card cannot be moved to the excuse pile.";
+            } else {
+                msg = "The excuse card cannot be placed on an empty pile.";
+            }
+            if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+            else alert(msg);
+            return { allowed: false };
+        }
+
+        // Disallow moving the excuse at the bottom of a pile
+        if (destinationType === 'board' && cardTo && cardFrom.id === 'excuse') {
+            if ((cardTo.type === 'trump' && (cardTo.rank === 2 || cardTo.rank === 1)) || (cardTo.type === 'normal' && (cardTo.rank === '2' || cardTo.rank === 'A'))) {
+                const msg = "The excuse card cannot be placed under this card.";
+                if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                else alert(msg);
+                return { allowed: false };
+            }
+        }
+
+        // Disallow moving multiple cards to the excuse pile
+        if (destinationType === 'excuse' && moveType === 'multiple') {
+            const msg = "You can only move one card at a time to the excuse pile.";
+            if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+            else alert(msg);
+            return { allowed: false };
+        }
+
+        // Disallow moving the excuse card onto a card that is not available anymore
+        // But we should check if a card that could replace the excuse is being moved
+        /*if (cardTo && cardFrom.id === 'excuse') {
+        }*/
+
+        // Allow moving the excuse card anywhere else
+        if (cardFrom.id === 'excuse') {
+            return { allowed: true };
+        }
+
+        function getExcuseState() {
+            const colorInverse = (color) => {
+                if (color === 'red') return 'black';
+                if (color === 'black') return 'red';
+                return undefined;
+            }
+
+            const rankBelow = (type, rank) => {
+                if (type === 'trump' && rank > 1) return rank - 1;
+                if (type === 'trump' && rank === 1) return undefined;
+                const index = ranks.indexOf(rank);
+                if (index > 0) return ranks[index - 1];
+                return undefined;
+            }
+
+            // Check board piles
+            for (let pile of gs.board) {
+                const index = pile.findIndex(card => card.id === 'excuse');
+                if (index !== -1) {
+                    if (index !== 0) {
+                        const aboveCard = pile[index - 1];
+                        return {
+                            id: 'excuse',
+                            suit: undefined,
+                            rank: rankBelow(aboveCard.type, aboveCard.rank),
+                            color: colorInverse(aboveCard.color),
+                            type: aboveCard.type
+                        };
+                    } else {
+                        const msg = "You cannot play on the excuse card if it's at the top of a pile, please move it first.";
+                        if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                        else alert(msg);
+                        return { allowed: false };
+                    }
+                }
+            }
+
+            // Check trump piles
+            for (let pile of gs.trumpPiles) {
+                const index = pile.findIndex(card => card.id === 'excuse');
+                if (index !== -1) {
+                    return {
+                        id: 'excuse',
+                        suit: undefined,
+                        rank: pile[0].rank === 1 ? pile[index - 1].rank + 1 : pile[index - 1].rank - 1,
+                        color: undefined,
+                        type: 'trump'
+                    };
+                }
+            }
+
+            // Check foundation piles
+            for (let pile of gs.foundationPiles) {
+                const index = pile.findIndex(card => card.id === 'excuse');
+                if (index !== -1) {
+                    return {
+                        id: 'excuse',
+                        suit: pile[0].suit,
+                        rank: ranks[ranks.indexOf(pile[index - 1].rank) + 1],
+                        color: pile[0].color,
+                        type: 'normal'
+                    };
+                }
+            }
+
+            // Check discard piles
+            for (let playerId of ['player', 'opponent']) {
+                const pile = gs.players[playerId].discard;
+                const index = pile.findIndex(card => card.id === 'excuse');
+                if (index !== -1) {
+                    if (index !== 0) {
+                        const aboveCard = pile[index - 1];
+                        return {
+                            id: 'excuse',
+                            suit: undefined,
+                            rank: rankBelow(aboveCard.type, aboveCard.rank),
+                            color: colorInverse(aboveCard.color),
+                            type: aboveCard.type
+                        };
+                    } else {
+                        const msg = "You cannot play on the excuse card if it's the first discarded card.";
+                        if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                        else alert(msg);
+                        return { allowed: false };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // If moving onto the excuse pile, check if the card can replace the excuse card
+        if (destinationType === 'excuse') {
+            const excuseState = getExcuseState();
+            let msg = null;
+
+            if (!excuseState) msg = "Cannot determine the state of the excuse card.";
+
+            if (excuseState && excuseState.suit) {
+                if (cardFrom.suit !== excuseState.suit || cardFrom.rank !== excuseState.rank || cardFrom.type !== excuseState.type) {
+                    msg = "This card cannot replace the excuse card.";
+                }
+            } else {
+                if (cardFrom.color !== excuseState.color || cardFrom.rank !== excuseState.rank || cardFrom.type !== excuseState.type) {
+                    msg = "This card cannot replace the excuse card.";
+                }
+            }
+            if (msg) {
+                if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                else alert(msg);
+                return { allowed: false };
+            }
+        }
+
+        // Replace cardTo with the excuse state if moving onto the excuse card
+        if (cardTo && cardTo.id === 'excuse') {
+            cardTo = getExcuseState();
+
+            if (!cardTo) {
+                const msg = "Cannot determine the state of the excuse card.";
+                if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                else alert(msg);
+                return { allowed: false };
+            }
+
+            if (cardTo.allowed === false) {
                 return { allowed: false };
             }
         }
