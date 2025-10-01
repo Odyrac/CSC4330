@@ -1,5 +1,12 @@
 (function (global) {
     function setupGame() {
+        try {
+            const qs = (function () { try { return window.location && window.location.search ? window.location.search : ''; } catch (e) { return ''; } })();
+            const params = new URLSearchParams(qs);
+            let botEnabled = false;
+            if (params.has('bot')) botEnabled = true;
+            window._botEnabled = botEnabled;
+        } catch (e) { window._botEnabled = false; }
         const deck = Deck.buildDeck();
         const shuffled = Deck.shuffleDeck(deck);
         const { hand1, hand2, initialBoard } = Deck.dealDeck(shuffled);
@@ -34,6 +41,35 @@
             if (turn !== 'player' && turn !== 'opponent') return;
             gameState.currentPlayerId = turn;
             try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', gameState.currentPlayerId); } catch (e) { }
+            try {
+                if (window.Bot && window.Bot.playBot && window._botEnabled) {
+                    maybeRunBot();
+                }
+            } catch (e) { }
+        }
+
+        function maybeRunBot() {
+            try {
+                if (gameState.currentPlayerId !== 'opponent') return;
+                setTimeout(async () => {
+                    try {
+                        const res = window.Bot.playBot(gameState);
+                        if (res && typeof res.then === 'function') {
+                            await res;
+                        }
+                        try { UI.renderTurnIndicator('turnIndicator', gameState.currentPlayerId); } catch (e) { }
+                        try { UI.renderFacedown(playerFacedown, player.facedown); } catch (e) { }
+                        try { UI.renderFacedown(opponentFacedown, opponent.facedown); } catch (e) { }
+                        try { UI.renderDiscard(playerDiscard, player.discard); } catch (e) { }
+                        try { UI.renderDiscard(opponentDiscard, opponent.discard); } catch (e) { }
+                        try { UI.renderCurrent(playerCurrent, player.current); } catch (e) { }
+                        try { UI.renderCurrent(opponentCurrent, opponent.current); } catch (e) { }
+                        if (boardSlots && boardSlots.length) boardSlots.forEach((slotEl, idx) => UI.renderBoardSlot(slotEl, gameState.board[idx]));
+                        if (trumpPileEls && trumpPileEls.length) trumpPileEls.forEach((el, idx) => UI.renderSmallPile(el, gameState.trumpPiles[idx]));
+                        if (foundationPileEls && foundationPileEls.length) foundationPileEls.forEach((el, idx) => UI.renderSmallPile(el, gameState.foundationPiles[idx]));
+                    } catch (e) { }
+                }, 250);
+            } catch (e) { }
         }
 
         UI.renderFacedown(playerFacedown, player.facedown);
@@ -41,6 +77,8 @@
         try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', getCurrentTurn()); } catch (e) { }
 
         function moveToCurrent(side, facedownEl, currentEl, discardEl) {
+            // If the bot is playing, prevent user interaction
+            try { if (window.Bot && window.Bot.isPlaying && !(window.Bot._internalAction === true)) return; } catch (e) { }
             const owner = (side === player) ? 'player' : (side === opponent) ? 'opponent' : null;
             if (owner && getCurrentTurn() !== owner) {
                 const msg = "It's not your turn to draw.";

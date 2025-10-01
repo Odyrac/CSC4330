@@ -18,8 +18,11 @@
     <img src="src/assets/banner.png" alt="Banner" id="banner">
 
     <h1 id="title">Chaoui</h1>
+    <script>
+        createButton('Play locally', 'play', function () { window.location.href = 'game.html'; });
 
-    <script> createButton('Local game', 'play', function () { window.location.href = 'game.html'; }); </script>
+        createButton('Play a bot', 'bot', function () { window.location.href = 'game.html?bot'; });
+    </script>
 </body>
 
 </html>

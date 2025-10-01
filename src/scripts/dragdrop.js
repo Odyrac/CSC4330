@@ -468,6 +468,8 @@
     }
 
     function onMouseDown(e, side, currentEl, onMoved) {
+        // If the bot is currently playing, ignore user drag attempts
+        try { if (window.Bot && window.Bot.isPlaying && !(window.Bot._internalAction === true)) return; } catch (err) { }
         if (dragState) return;
         if (!side.current && !(side.stack && side.stack.length)) return;
         e.preventDefault();

@@ -1,5 +1,9 @@
 (function (global) {
     function show(message, durationMs) {
+        // If the bot is playing and requests suppression, do nothing
+        try {
+            if (window.Bot && window.Bot.suppressToasts) return;
+        } catch (e) { }
         durationMs = typeof durationMs === 'number' ? durationMs : 3500;
         let container = document.getElementById('toast-container');
         if (!container) {
