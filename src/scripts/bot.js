@@ -358,6 +358,7 @@
                     outerSafety++;
                     const anyEmpty = (gs.board && gs.board.some(s => !s || s.length === 0));
                     if (anyEmpty && !gs.players[botId].current) {
+                        const hadShuffle = (gs.players[botId].facedown.length === 0);
                         try {
                             const facedownEl = document.getElementById(botId + 'Facedown');
                             if (facedownEl) {
@@ -366,8 +367,8 @@
                                 try { if (window.Bot) window.Bot._internalAction = false; } catch (e) { }
                             }
                         } catch (e) { }
-                        // Attendre l'animation de pioche complète (400ms flip + 500ms déplacement + 100ms marge)
-                        await new Promise(r => setTimeout(r, 1000));
+                        const waitTime = hadShuffle ? 3000 : 1000;
+                        await new Promise(r => setTimeout(r, waitTime));
                         continue;
                     }
 
@@ -388,6 +389,7 @@
                     if (drained) continue;
 
                     if (!gs.players[botId].current) {
+                        const hadShuffle = (gs.players[botId].facedown.length === 0);
                         try {
                             const facedownEl = document.getElementById(botId + 'Facedown');
                             if (facedownEl) {
@@ -396,8 +398,8 @@
                                 try { if (window.Bot) window.Bot._internalAction = false; } catch (e) { }
                             }
                         } catch (e) { }
-                        // Attendre l'animation de pioche complète (400ms flip + 500ms déplacement + 100ms marge)
-                        await new Promise(r => setTimeout(r, 1000));
+                        const waitTime = hadShuffle ? 3000 : 1000;
+                        await new Promise(r => setTimeout(r, waitTime));
                     }
 
                     if (gs.players[botId].current) {
