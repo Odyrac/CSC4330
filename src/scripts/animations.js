@@ -179,9 +179,85 @@
         });
     }
 
+    async function animateBoardReveal(boardSlots, initialBoard) {
+        if (!boardSlots || boardSlots.length === 0) return;
+
+        const imagesToLoad = [
+            'src/assets/cards/faceDown.png',
+            ...initialBoard.map(card => `src/assets/cards/${card.id}.png`)
+        ];
+
+        await Promise.all(imagesToLoad.map(src => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = resolve;
+                img.src = src;
+            });
+        }));
+
+        const cardContainers = [];
+        for (let i = 0; i < boardSlots.length; i++) {
+            const slot = boardSlots[i];
+            const card = initialBoard[i];
+
+            if (!slot || !card) continue;
+
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'board-card board-card-reveal';
+            cardContainer.style.width = '100%';
+            cardContainer.style.height = '100%';
+
+            const backFace = document.createElement('img');
+            backFace.src = 'src/assets/cards/faceDown.png';
+            backFace.className = 'card-face card-back-face';
+            backFace.alt = 'Card back';
+
+            const frontFace = document.createElement('img');
+            frontFace.src = `src/assets/cards/${card.id}.png`;
+            frontFace.className = 'card-face card-front-face';
+            frontFace.alt = card.id || 'Card';
+
+            cardContainer.appendChild(backFace);
+            cardContainer.appendChild(frontFace);
+
+            slot.innerHTML = '';
+            slot.appendChild(cardContainer);
+
+            cardContainers.push({ container: cardContainer, slot: slot, card: card });
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        for (let i = 0; i < cardContainers.length; i++) {
+            const { container: cardContainer, slot, card } = cardContainers[i];
+            cardContainer.classList.add('flipping');
+            await new Promise(resolve => setTimeout(resolve, 250));
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+        for (let i = 0; i < cardContainers.length; i++) {
+            const { slot, card } = cardContainers[i];
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'board-card';
+            wrapper.style.transform = 'translateY(0px)';
+            wrapper.style.zIndex = 100;
+
+            const img = document.createElement('img');
+            img.src = `src/assets/cards/${card.id}.png`;
+            img.alt = 'Board card';
+
+            wrapper.appendChild(img);
+            slot.innerHTML = '';
+            slot.appendChild(wrapper);
+        }
+    }
+
     global.Animations = {
         animateCardDraw,
         animateBotMove,
-        animateVictory
+        animateVictory,
+        animateBoardReveal
     };
 })(window);

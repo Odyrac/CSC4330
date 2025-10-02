@@ -192,9 +192,19 @@
             }
         }
 
-        initialBoard.forEach((card, idx) => {
-            appendCardToBoard(idx, 'board', card);
-        });
+        if (window.Animations && window.Animations.animateBoardReveal) {
+            Animations.animateBoardReveal(boardSlots, initialBoard).then(() => {
+                initialBoard.forEach((card, idx) => {
+                    if (idx >= 0 && idx < board.length) {
+                        board[idx].push(card);
+                    }
+                });
+            });
+        } else {
+            initialBoard.forEach((card, idx) => {
+                appendCardToBoard(idx, 'board', card);
+            });
+        }
 
         boardSlots.forEach((slotEl, idx) => {
             if (!slotEl) return;
