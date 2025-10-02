@@ -58,6 +58,32 @@
         <div class="small-pile foundation" id="foundationPile3"></div>
     </div>
 
+    <div id="settings">
+        <script>
+            const settingsDiv = document.getElementById('settings');
+            createButton('', 'home', function () { window.location.href = 'index.html'; }, settingsDiv, 'small');
+
+            let fullScreenButton;
+            function updateFullScreenButton() {
+                const isFullScreen = document.fullscreenElement;
+                if (fullScreenButton) {
+                    fullScreenButton.remove();
+                }
+                fullScreenButton = createButton('', isFullScreen ? 'minimize' : 'maximize', function () {
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    } else {
+                        document.documentElement.requestFullscreen();
+                    }
+                }, settingsDiv, 'small');
+            }
+
+            updateFullScreenButton();
+
+            document.addEventListener('fullscreenchange', updateFullScreenButton);
+        </script>
+    </div>
+
     <div id="turnIndicator">Player's turn</div>
 </body>
 
