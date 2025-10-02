@@ -10,8 +10,9 @@
         emptyBoardBonus: 50,
         safety: { inner: 100, outer: 50 },
         useDragDrop: false,
-        attemptDelay: 600,
-        afterMoveDelay: 800
+        attemptDelay: 300,
+        afterMoveDelay: 300,
+        animationDelay: 600
     };
 
     function applyMove(gameState, from, sourceType, dest, destType, moveType) {
@@ -210,6 +211,120 @@
             return false;
         }
 
+        async function animateBotMove(fromEl, toEl, cards, destType, sourceType) {
+            if (!fromEl || !toEl || !cards || !cards.length) return;
+
+            try {
+                const clone = window.DragDrop && window.DragDrop.createCloneFromCards
+                    ? window.DragDrop.createCloneFromCards(cards)
+                    : null;
+
+                if (!clone) return;
+                clone.classList.add('bot-dragging');
+
+                const fromRect = fromEl.getBoundingClientRect();
+                const toRect = toEl.getBoundingClientRect();
+
+                const offsetY = 40;
+
+                let startX = fromRect.left + fromRect.width / 2;
+                let startY = fromRect.top + fromRect.height / 2;
+
+                if (sourceType === 'board') {
+                    const existingCards = fromEl.querySelectorAll && fromEl.querySelectorAll('.board-card');
+                    if (existingCards && existingCards.length > 0) {
+                        const totalCards = existingCards.length;
+                        const movedCount = cards.length;
+                        const firstMovedCardIndex = totalCards - movedCount;
+                        startY = fromRect.top + (firstMovedCardIndex * offsetY) + 70;
+                    }
+                }
+
+                let endX = toRect.left + toRect.width / 2;
+                let endY = toRect.top + toRect.height / 2;
+
+                if (destType === 'board') {
+                    const existingCards = toEl.querySelectorAll && toEl.querySelectorAll('.board-card');
+                    const cardCount = existingCards ? existingCards.length : 0;
+                    endY = toRect.top + (cardCount * offsetY) + 70;
+                }
+
+                const cloneRect = clone.getBoundingClientRect();
+                clone.style.left = (startX - cloneRect.width / 2) + 'px';
+                clone.style.top = (startY - cloneRect.height / 2) + 'px';
+
+                if (toEl.classList) toEl.classList.add('drop-highlight');
+
+                await new Promise(resolve => {
+                    const duration = DEFAULT_CONFIG.animationDelay;
+                    const startTime = Date.now();
+
+                    function animate() {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+
+                        const eased = progress < 0.5
+                            ? 2 * progress * progress
+                            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+                        const currentX = startX + (endX - startX) * eased;
+                        const currentY = startY + (endY - startY) * eased;
+
+                        clone.style.left = (currentX - cloneRect.width / 2) + 'px';
+                        clone.style.top = (currentY - cloneRect.height / 2) + 'px';
+
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            resolve();
+                        }
+                    }
+
+                    requestAnimationFrame(animate);
+                });
+
+                if (toEl.classList) toEl.classList.remove('drop-highlight');
+                if (clone && clone.parentNode) clone.parentNode.removeChild(clone);
+
+            } catch (e) { }
+        }
+
+        function getElementForSource(s) {
+            try {
+                if (s.type === 'current') {
+                    return document.getElementById(s.side + 'Current');
+                }
+                if (s.type === 'discard') {
+                    return document.getElementById(s.side + 'Discard');
+                }
+                if (s.type === 'board') {
+                    return document.getElementById('boardSlot' + s.index);
+                }
+            } catch (e) { }
+            return null;
+        }
+
+        function getElementForDest(d) {
+            try {
+                if (d.type === 'board') {
+                    return document.getElementById('boardSlot' + d.index);
+                }
+                if (d.type === 'trump') {
+                    return document.getElementById('trumpPile' + d.index);
+                }
+                if (d.type === 'foundation') {
+                    return document.getElementById('foundationPile' + d.index);
+                }
+                if (d.type === 'player') {
+                    return document.getElementById('playerDiscard');
+                }
+                if (d.type === 'opponent') {
+                    return document.getElementById('opponentDiscard');
+                }
+            } catch (e) { }
+            return null;
+        }
+
         async function tryMoveFromSource(s) {
             const cardsToMove = (s.type === 'board' && s.count && s.count > 1) ? (gs.board[s.index].slice(gs.board[s.index].length - s.count)) : [s.card];
             const boardNonEmpty = [];
@@ -265,6 +380,12 @@
                 }
                 if (!allowed) continue;
 
+                const fromEl = getElementForSource(s);
+                const toEl = getElementForDest(d);
+                if (fromEl && toEl) {
+                    await animateBotMove(fromEl, toEl, cardsToMove, d.type, s.type);
+                }
+
                 const applied = applyMove(gs, s, s.type, d, d.type, moveType);
                 if (applied) {
                     try { window.GameState = gs; } catch (e) { }
@@ -279,6 +400,13 @@
                         const c = cardsToMove[0];
                         const res = window.Rules && window.Rules.checkMove ? window.Rules.checkMove({ cardFrom: c, cardTo: null, destinationType: 'board', moveType: 'unique' }) : { allowed: true };
                         if (!res || !res.allowed) continue;
+
+                        const fromEl = getElementForSource(s);
+                        const toEl = getElementForDest(be);
+                        if (fromEl && toEl) {
+                            await animateBotMove(fromEl, toEl, [c], 'board', s.type);
+                        }
+
                         const applied2 = applyMove(gs, s, s.type, be, be.type, 'unique');
                         if (applied2) {
                             try { window.GameState = gs; } catch (e) { }
