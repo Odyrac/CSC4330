@@ -99,7 +99,7 @@
         UI.renderFacedown(opponentFacedown, opponent.facedown);
         try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', getCurrentTurn()); } catch (e) { }
 
-        function moveToCurrent(side, facedownEl, currentEl, discardEl) {
+        async function moveToCurrent(side, facedownEl, currentEl, discardEl) {
             // If the bot is playing, prevent user interaction
             try { if (window.Bot && window.Bot.isPlaying && !(window.Bot._internalAction === true)) return; } catch (e) { }
             const owner = (side === player) ? 'player' : (side === opponent) ? 'opponent' : null;
@@ -112,9 +112,27 @@
             if (side.current) return;
 
             if (side.facedown.length === 0) {
-                Deck.replenishFromDiscard(side);
-                UI.renderFacedown(facedownEl, side.facedown);
-                UI.renderDiscard(discardEl, side.discard);
+                if (side.discard.length === 0) {
+                    if (checkVictory()) {
+                        return;
+                    }
+                    return;
+                }
+
+                if (window.Animations && window.Animations.animateShuffleReplenish) {
+                    await new Promise(resolve => {
+                        window.Animations.animateShuffleReplenish(discardEl, facedownEl, () => {
+                            Deck.replenishFromDiscard(side);
+                            UI.renderFacedown(facedownEl, side.facedown);
+                            UI.renderDiscard(discardEl, side.discard);
+                            resolve();
+                        });
+                    });
+                } else {
+                    Deck.replenishFromDiscard(side);
+                    UI.renderFacedown(facedownEl, side.facedown);
+                    UI.renderDiscard(discardEl, side.discard);
+                }
             }
 
             // Check victory after attempting to draw
@@ -125,8 +143,10 @@
             const card = side.facedown.shift();
             side.current = card;
 
-            Animations.animateCardDraw(facedownEl, currentEl, card, () => {
-                UI.renderFacedown(facedownEl, side.facedown);
+            UI.renderFacedown(facedownEl, side.facedown);
+
+            side._cancelDrawAnimation = Animations.animateCardDraw(facedownEl, currentEl, card, () => {
+                side._cancelDrawAnimation = null;
                 UI.renderCurrent(currentEl, card);
                 UI.renderDiscard(discardEl, side.discard);
             });
@@ -445,13 +465,23 @@
             });
         });
 
-        playerCurrent.addEventListener('mousedown', (e) => DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
-            UI.renderCurrent(playerCurrent, fromSide.current);
-        }));
+        playerCurrent.addEventListener('mousedown', (e) => {
+            DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
+                if (!fromSide.current && player._cancelDrawAnimation) {
+                    player._cancelDrawAnimation();
+                    player._cancelDrawAnimation = null;
+                }
+                UI.renderCurrent(playerCurrent, fromSide.current);
+            });
+        });
         playerCurrent.addEventListener && playerCurrent.addEventListener('pointerdown', (e) => {
             e.preventDefault && e.preventDefault();
             e.stopPropagation && e.stopPropagation();
             DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
+                if (!fromSide.current && player._cancelDrawAnimation) {
+                    player._cancelDrawAnimation();
+                    player._cancelDrawAnimation = null;
+                }
                 UI.renderCurrent(playerCurrent, fromSide.current);
             });
         });
@@ -459,17 +489,31 @@
             e.preventDefault && e.preventDefault();
             e.stopPropagation && e.stopPropagation();
             DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
+                if (!fromSide.current && player._cancelDrawAnimation) {
+                    player._cancelDrawAnimation();
+                    player._cancelDrawAnimation = null;
+                }
                 UI.renderCurrent(playerCurrent, fromSide.current);
             });
         });
 
-        opponentCurrent.addEventListener('mousedown', (e) => DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
-            UI.renderCurrent(opponentCurrent, fromSide.current);
-        }));
+        opponentCurrent.addEventListener('mousedown', (e) => {
+            DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
+                if (!fromSide.current && opponent._cancelDrawAnimation) {
+                    opponent._cancelDrawAnimation();
+                    opponent._cancelDrawAnimation = null;
+                }
+                UI.renderCurrent(opponentCurrent, fromSide.current);
+            });
+        });
         opponentCurrent.addEventListener && opponentCurrent.addEventListener('pointerdown', (e) => {
             e.preventDefault && e.preventDefault();
             e.stopPropagation && e.stopPropagation();
             DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
+                if (!fromSide.current && opponent._cancelDrawAnimation) {
+                    opponent._cancelDrawAnimation();
+                    opponent._cancelDrawAnimation = null;
+                }
                 UI.renderCurrent(opponentCurrent, fromSide.current);
             });
         });
@@ -477,6 +521,10 @@
             e.preventDefault && e.preventDefault();
             e.stopPropagation && e.stopPropagation();
             DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
+                if (!fromSide.current && opponent._cancelDrawAnimation) {
+                    opponent._cancelDrawAnimation();
+                    opponent._cancelDrawAnimation = null;
+                }
                 UI.renderCurrent(opponentCurrent, fromSide.current);
             });
         });

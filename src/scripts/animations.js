@@ -22,19 +22,33 @@
         animCard.appendChild(frontImg);
         document.body.appendChild(animCard);
 
+        let timeoutId = null;
+        let cancelled = false;
+
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
+                if (cancelled) return;
                 animCard.classList.add('animating');
                 animCard.style.transform = 'rotateY(180deg)';
                 animCard.style.left = toRect.left + 'px';
                 animCard.style.top = toRect.top + 'px';
 
-                setTimeout(() => {
-                    animCard.remove();
-                    onComplete();
+                timeoutId = setTimeout(() => {
+                    if (!cancelled) {
+                        animCard.remove();
+                        onComplete();
+                    }
                 }, 900);
             });
         });
+
+        return function cleanup() {
+            cancelled = true;
+            if (timeoutId) clearTimeout(timeoutId);
+            if (animCard && animCard.parentNode) {
+                animCard.remove();
+            }
+        };
     }
 
     async function animateBotMove(fromEl, toEl, cards, destType, sourceType, animationDelay) {
@@ -254,10 +268,115 @@
         }
     }
 
+    async function animateShuffleReplenish(discardEl, facedownEl, onComplete) {
+        if (!discardEl || !facedownEl) {
+            if (onComplete) onComplete();
+            return;
+        }
+
+        const facedownRect = facedownEl.getBoundingClientRect();
+
+        const animContainer = document.createElement('div');
+        animContainer.className = 'shuffle-animation-container';
+        animContainer.style.position = 'fixed';
+        animContainer.style.top = '0';
+        animContainer.style.left = '0';
+        animContainer.style.width = '100%';
+        animContainer.style.height = '100%';
+        animContainer.style.pointerEvents = 'none';
+        animContainer.style.zIndex = '10000';
+        document.body.appendChild(animContainer);
+
+        const centerX = facedownRect.left + facedownRect.width / 2;
+        const centerY = facedownRect.top + facedownRect.height / 2;
+
+        const largeWidth = 100;
+        const largeHeight = 140;
+        const smallWidth = 60;
+        const smallHeight = 84;
+
+        const numCards = 8;
+        const cards = [];
+
+        for (let i = 0; i < numCards; i++) {
+            const card = document.createElement('div');
+            card.className = 'shuffle-card';
+            card.style.position = 'absolute';
+            card.style.width = largeWidth + 'px';
+            card.style.height = largeHeight + 'px';
+            card.style.left = (centerX - largeWidth / 2) + 'px';
+            card.style.top = (centerY - largeHeight / 2) + 'px';
+            card.style.transition = 'all 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+            card.style.transformOrigin = 'center';
+            card.style.opacity = i === 0 ? '1' : '0';
+
+            const img = document.createElement('img');
+            img.src = 'src/assets/cards/faceDown.png';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '6px';
+            img.alt = 'Card';
+
+            card.appendChild(img);
+            animContainer.appendChild(card);
+            cards.push(card);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                cards.forEach((card, i) => {
+                    card.style.opacity = '1';
+                    card.style.width = smallWidth + 'px';
+                    card.style.height = smallHeight + 'px';
+
+                    const angle = (360 / numCards) * i;
+                    const radius = 90;
+                    const offsetX = Math.cos(angle * Math.PI / 180) * radius;
+                    const offsetY = Math.sin(angle * Math.PI / 180) * radius;
+
+                    card.style.left = (centerX + offsetX - smallWidth / 2) + 'px';
+                    card.style.top = (centerY + offsetY - smallHeight / 2) + 'px';
+                    card.style.transform = `rotate(${angle}deg)`;
+                });
+            });
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 750));
+
+        cards.forEach((card, i) => {
+            const stagger = i * 40;
+            setTimeout(() => {
+                card.style.left = (centerX - smallWidth / 2) + 'px';
+                card.style.top = (centerY - smallHeight / 2) + 'px';
+                card.style.transform = 'rotate(0deg)';
+
+                setTimeout(() => {
+                    card.style.width = largeWidth + 'px';
+                    card.style.height = largeHeight + 'px';
+                    card.style.left = (centerX - largeWidth / 2) + 'px';
+                    card.style.top = (centerY - largeHeight / 2) + 'px';
+                    card.style.opacity = i === numCards - 1 ? '1' : '0';
+                }, 200);
+            }, stagger);
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 1100));
+
+        if (animContainer && animContainer.parentNode) {
+            animContainer.parentNode.removeChild(animContainer);
+        }
+
+        if (onComplete) onComplete();
+    }
+
     global.Animations = {
         animateCardDraw,
         animateBotMove,
         animateVictory,
-        animateBoardReveal
+        animateBoardReveal,
+        animateShuffleReplenish
     };
 })(window);
