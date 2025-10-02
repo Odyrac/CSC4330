@@ -1,0 +1,122 @@
+(function (global) {
+    function animateCardDraw(fromEl, toEl, card, onComplete) {
+        const fromRect = fromEl.getBoundingClientRect();
+        const toRect = toEl.getBoundingClientRect();
+
+        const animCard = document.createElement('div');
+        animCard.className = 'card-drawing';
+        animCard.style.left = fromRect.left + 'px';
+        animCard.style.top = fromRect.top + 'px';
+
+        const backImg = document.createElement('img');
+        backImg.src = 'src/assets/cards/faceDown.png';
+        backImg.className = 'card-back';
+        backImg.alt = 'Card back';
+
+        const frontImg = document.createElement('img');
+        frontImg.src = `src/assets/cards/${card.id}.png`;
+        frontImg.className = 'card-front';
+        frontImg.alt = card.id || 'Card';
+
+        animCard.appendChild(backImg);
+        animCard.appendChild(frontImg);
+        document.body.appendChild(animCard);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                animCard.classList.add('animating');
+                animCard.style.transform = 'rotateY(180deg)';
+                animCard.style.left = toRect.left + 'px';
+                animCard.style.top = toRect.top + 'px';
+
+                setTimeout(() => {
+                    animCard.remove();
+                    onComplete();
+                }, 900);
+            });
+        });
+    }
+
+    async function animateBotMove(fromEl, toEl, cards, destType, sourceType, animationDelay) {
+        if (!fromEl || !toEl || !cards || !cards.length) return;
+
+        try {
+            const clone = window.DragDrop && window.DragDrop.createCloneFromCards
+                ? window.DragDrop.createCloneFromCards(cards)
+                : null;
+
+            if (!clone) return;
+            clone.classList.add('bot-dragging');
+
+            const fromRect = fromEl.getBoundingClientRect();
+            const toRect = toEl.getBoundingClientRect();
+
+            const offsetY = 40;
+
+            let startX = fromRect.left + fromRect.width / 2;
+            let startY = fromRect.top + fromRect.height / 2;
+
+            if (sourceType === 'board') {
+                const existingCards = fromEl.querySelectorAll && fromEl.querySelectorAll('.board-card');
+                if (existingCards && existingCards.length > 0) {
+                    const totalCards = existingCards.length;
+                    const movedCount = cards.length;
+                    const firstMovedCardIndex = totalCards - movedCount;
+                    startY = fromRect.top + (firstMovedCardIndex * offsetY) + 70;
+                }
+            }
+
+            let endX = toRect.left + toRect.width / 2;
+            let endY = toRect.top + toRect.height / 2;
+
+            if (destType === 'board') {
+                const existingCards = toEl.querySelectorAll && toEl.querySelectorAll('.board-card');
+                const cardCount = existingCards ? existingCards.length : 0;
+                endY = toRect.top + (cardCount * offsetY) + 70;
+            }
+
+            const cloneRect = clone.getBoundingClientRect();
+            clone.style.left = (startX - cloneRect.width / 2) + 'px';
+            clone.style.top = (startY - cloneRect.height / 2) + 'px';
+
+            if (toEl.classList) toEl.classList.add('drop-highlight');
+
+            await new Promise(resolve => {
+                const duration = animationDelay || 600;
+                const startTime = Date.now();
+
+                function animate() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+
+                    const eased = progress < 0.5
+                        ? 2 * progress * progress
+                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+                    const currentX = startX + (endX - startX) * eased;
+                    const currentY = startY + (endY - startY) * eased;
+
+                    clone.style.left = (currentX - cloneRect.width / 2) + 'px';
+                    clone.style.top = (currentY - cloneRect.height / 2) + 'px';
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        resolve();
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            });
+
+            if (toEl.classList) toEl.classList.remove('drop-highlight');
+            if (clone && clone.parentNode) clone.parentNode.removeChild(clone);
+
+        } catch (e) { }
+    }
+
+    global.Animations = {
+        animateCardDraw,
+        animateBotMove
+    };
+})(window);

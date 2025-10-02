@@ -103,9 +103,12 @@
 
             const card = side.facedown.shift();
             side.current = card;
-            UI.renderFacedown(facedownEl, side.facedown);
-            UI.renderCurrent(currentEl, card);
-            UI.renderDiscard(discardEl, side.discard);
+
+            Animations.animateCardDraw(facedownEl, currentEl, card, () => {
+                UI.renderFacedown(facedownEl, side.facedown);
+                UI.renderCurrent(currentEl, card);
+                UI.renderDiscard(discardEl, side.discard);
+            });
         }
 
         playerFacedown.addEventListener('click', () => moveToCurrent(player, playerFacedown, playerCurrent, playerDiscard));
