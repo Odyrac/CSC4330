@@ -37,10 +37,33 @@
 
         function getCurrentTurn() { return gameState.currentPlayerId; }
 
+        function checkVictory() {
+            if (player.facedown.length === 0 && player.discard.length === 0 && !player.current) {
+                setTimeout(() => {
+                    if (window.Animations && window.Animations.animateVictory) {
+                        window.Animations.animateVictory('player');
+                    }
+                }, 300);
+                return true;
+            }
+            if (opponent.facedown.length === 0 && opponent.discard.length === 0 && !opponent.current) {
+                setTimeout(() => {
+                    if (window.Animations && window.Animations.animateVictory) {
+                        window.Animations.animateVictory('opponent');
+                    }
+                }, 300);
+                return true;
+            }
+            return false;
+        }
+
         function setTurn(turn) {
             if (turn !== 'player' && turn !== 'opponent') return;
             gameState.currentPlayerId = turn;
             try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', gameState.currentPlayerId); } catch (e) { }
+
+            setTimeout(() => checkVictory(), 100);
+
             try {
                 if (window.Bot && window.Bot.playBot && window._botEnabled) {
                     maybeRunBot();
@@ -94,10 +117,8 @@
                 UI.renderDiscard(discardEl, side.discard);
             }
 
-            if (side.facedown.length === 0 && side.discard.length === 0 && !side.current) {
-                const msg = 'This player has no more cards, he/she wins!';
-                if (window.Toast && window.Toast.show) window.Toast.show(msg, 4000);
-                else alert(msg);
+            // Check victory after attempting to draw
+            if (checkVictory()) {
                 return;
             }
 
@@ -334,6 +355,8 @@
                     setTurn('player');
                 }
             }
+            // Check victory after discard
+            setTimeout(() => checkVictory(), 200);
         }
 
         playerDiscard.__appendCardFor = function (owner, card) { appendCardToPile(playerDiscard, owner, card); };

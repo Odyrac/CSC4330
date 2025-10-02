@@ -115,8 +115,73 @@
         } catch (e) { }
     }
 
+    let victoryShown = false;
+
+    function animateVictory(winner) {
+        if (victoryShown) return;
+        victoryShown = true;
+
+        requestAnimationFrame(() => {
+            const overlay = document.createElement('div');
+            overlay.className = 'victory-overlay';
+            document.body.appendChild(overlay);
+
+            const modal = document.createElement('div');
+            modal.className = 'victory-modal';
+
+            const confettiContainer = document.createElement('div');
+            confettiContainer.className = 'confetti-container';
+
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.backgroundColor = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe'][Math.floor(Math.random() * 6)];
+                confettiContainer.appendChild(confetti);
+            }
+
+            const trophy = document.createElement('div');
+            trophy.className = 'victory-trophy';
+            trophy.innerHTML = '🏆';
+
+            const winnerText = document.createElement('div');
+            winnerText.className = 'victory-text';
+            const displayName = winner === 'player' ? 'Player' : 'Opponent';
+            winnerText.innerHTML = `<h1>${displayName} wins!</h1><p>Congratulations on your victory!</p>`;
+
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'victory-buttons';
+
+            if (typeof createButton === 'function') {
+                createButton('Home', 'home', () => {
+                    window.location.href = 'index.html';
+                }, buttonsContainer);
+
+                createButton('Restart', 'restart', () => {
+                    window.location.reload();
+                }, buttonsContainer);
+            }
+
+            modal.appendChild(trophy);
+            modal.appendChild(winnerText);
+            modal.appendChild(buttonsContainer);
+
+            document.body.appendChild(confettiContainer);
+            document.body.appendChild(modal);
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    overlay.classList.add('show');
+                    modal.classList.add('show');
+                });
+            });
+        });
+    }
+
     global.Animations = {
         animateCardDraw,
-        animateBotMove
+        animateBotMove,
+        animateVictory
     };
 })(window);
