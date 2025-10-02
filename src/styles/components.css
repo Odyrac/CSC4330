@@ -21,10 +21,27 @@
     background-color: rgba(224, 224, 224, 0.9);
 }
 
+.button-container:focus {
+    outline: none;
+}
+
+.button-container-small {
+    margin: 6px;
+}
+
 .button-icon {
     width: 28px;
     height: 28px;
+    pointer-events: none;
+}
+
+.button-icon-left {
     margin-right: 10px;
+}
+
+.button-icon-small {
+    width: 20px;
+    height: 20px;
 }
 
 #toast-container {

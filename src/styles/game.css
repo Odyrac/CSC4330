@@ -171,10 +171,18 @@
     pointer-events: none;
 }
 
-#turnIndicator {
+#settings {
     position: fixed;
     left: 12px;
     top: 12px;
+    display: flex;
+    flex-direction: row;
+}
+
+#turnIndicator {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
     background: rgba(0, 0, 0, 0.5);
     color: #F2F2F2;
     border-radius: 12px;
