@@ -274,6 +274,8 @@
             return;
         }
 
+        try { window._shuffleAnimationInProgress = true; } catch (e) { }
+
         const facedownRect = facedownEl.getBoundingClientRect();
 
         const animContainer = document.createElement('div');
@@ -370,6 +372,8 @@
         }
 
         if (onComplete) onComplete();
+
+        try { window._shuffleAnimationInProgress = false; } catch (e) { }
     }
 
     global.Animations = {
