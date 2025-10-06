@@ -16,8 +16,10 @@
     <script src="src/scripts/url.js"></script>
     <script src="src/scripts/deck.js"></script>
     <script src="src/scripts/ui.js"></script>
+    <script src="src/scripts/animations.js"></script>
     <script src="src/scripts/rules.js"></script>
     <script src="src/scripts/dragdrop.js"></script>
+    <script src="src/scripts/bot.js"></script>
     <script src="src/scripts/gameController.js"></script>
 </head>
 
@@ -55,6 +57,32 @@
         <div class="small-pile foundation" id="foundationPile1"></div>
         <div class="small-pile foundation" id="foundationPile2"></div>
         <div class="small-pile foundation" id="foundationPile3"></div>
+    </div>
+
+    <div id="settings">
+        <script>
+            const settingsDiv = document.getElementById('settings');
+            createButton('', 'home', function () { window.location.href = 'index.html'; }, settingsDiv, 'small');
+
+            let fullScreenButton;
+            function updateFullScreenButton() {
+                const isFullScreen = document.fullscreenElement;
+                if (fullScreenButton) {
+                    fullScreenButton.remove();
+                }
+                fullScreenButton = createButton('', isFullScreen ? 'minimize' : 'maximize', function () {
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    } else {
+                        document.documentElement.requestFullscreen();
+                    }
+                }, settingsDiv, 'small');
+            }
+
+            updateFullScreenButton();
+
+            document.addEventListener('fullscreenchange', updateFullScreenButton);
+        </script>
     </div>
 
     <div id="turnIndicator">Player's turn</div>

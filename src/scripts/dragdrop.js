@@ -11,6 +11,7 @@
         const clone = img.cloneNode(true);
         clone.style.position = 'fixed';
         clone.style.pointerEvents = 'none';
+        clone.style.zIndex = '9999';
         clone.classList.add('dragging-image');
         document.body.appendChild(clone);
         return clone;
@@ -26,6 +27,7 @@
         wrapper.classList.add('dragging-image-stack');
         wrapper.style.width = width + 'px';
         wrapper.style.height = height + 'px';
+        wrapper.style.zIndex = '9999';
         for (let i = 0; i < stack.length; i++) {
             const card = stack[i];
             const img = document.createElement('img');
@@ -41,6 +43,26 @@
         }
         document.body.appendChild(wrapper);
         return wrapper;
+    }
+
+    function createCloneFromCards(cards) {
+        if (!cards || !cards.length) return null;
+
+        if (cards.length > 1) {
+            return createStackClone(cards);
+        } else {
+            const img = document.createElement('img');
+            img.src = `src/assets/cards/${cards[0].id}.png`;
+            img.alt = cards[0].id || 'card';
+            img.style.position = 'fixed';
+            img.style.pointerEvents = 'none';
+            img.style.width = '100px';
+            img.style.height = '140px';
+            img.style.zIndex = '9999';
+            img.classList.add('dragging-image');
+            document.body.appendChild(img);
+            return img;
+        }
     }
 
     function moveClone(pageX, pageY) {
@@ -468,6 +490,8 @@
     }
 
     function onMouseDown(e, side, currentEl, onMoved) {
+        // If the bot is currently playing, ignore user drag attempts
+        try { if (window.Bot && window.Bot.isPlaying && !(window.Bot._internalAction === true)) return; } catch (err) { }
         if (dragState) return;
         if (!side.current && !(side.stack && side.stack.length)) return;
         e.preventDefault();
@@ -532,5 +556,5 @@
         excusePileEl = opts.excusePileEl || null;
     }
 
-    global.DragDrop = { init, onMouseDown };
+    global.DragDrop = { init, onMouseDown, createCloneImage, createStackClone, createCloneFromCards };
 })(window);

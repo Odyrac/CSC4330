@@ -47,7 +47,17 @@
     function replenishFromDiscard(side) {
         if (!side) return;
         if (Array.isArray(side.facedown) && side.facedown.length > 0) return;
-        if (!Array.isArray(side.discard) || side.discard.length <= 1) return;
+        if (!Array.isArray(side.discard) || side.discard.length === 0) return;
+
+        if (side.discard.length === 1) {
+            const lastCard = side.discard.pop();
+            if (!Array.isArray(side.facedown)) side.facedown = [];
+            side.facedown.length = 0;
+            side.facedown.push(lastCard);
+            if (!Array.isArray(side.discard)) side.discard = [];
+            side.discard.length = 0;
+            return;
+        }
 
         const lastCard = side.discard.pop();
         const shuffled = shuffleDeck(side.discard.slice());

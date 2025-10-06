@@ -78,5 +78,12 @@
         el.setAttribute('data-turn', turn);
     }
 
-    global.UI = { renderFacedown, renderCurrent, renderDiscard, renderBoardSlot, renderSmallPile, renderTurnIndicator };
+    global.UI = {
+        renderFacedown,
+        renderCurrent,
+        renderDiscard,
+        renderBoardSlot,
+        renderSmallPile,
+        renderTurnIndicator
+    };
 })(window);

@@ -110,6 +110,23 @@
             }
         }
 
+        // Disallow moving the excuse to trump or foundation piles if it's on the board and not the top card
+        if ((destinationType === 'trump' || destinationType === 'foundation') && cardFrom.id === 'excuse') {
+            let foundOnBoard = false;
+            for (let pile of gs.board) {
+                if (pile.includes(cardFrom) && pile.length > 1) {
+                    foundOnBoard = true;
+                    break;
+                }
+            }
+            if (foundOnBoard) {
+                const msg = "The excuse card is already replacing another card.";
+                if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                else alert(msg);
+                return { allowed: false };
+            }
+        }
+
         // Disallow moving multiple cards to the excuse pile
         if (destinationType === 'excuse' && moveType === 'multiple') {
             const msg = "You can only move one card at a time to the excuse pile.";

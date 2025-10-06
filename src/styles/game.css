@@ -171,14 +171,255 @@
     pointer-events: none;
 }
 
-#turnIndicator {
+#settings {
     position: fixed;
     left: 12px;
     top: 12px;
+    display: flex;
+    flex-direction: row;
+}
+
+#turnIndicator {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
     background: rgba(0, 0, 0, 0.5);
     color: #F2F2F2;
     border-radius: 12px;
     padding: 6px 10px;
     font-size: 14px;
     z-index: 2000;
+}
+
+.card-drawing {
+    position: fixed;
+    width: 100px;
+    height: 140px;
+    pointer-events: none;
+    z-index: 10000;
+    transform-style: preserve-3d;
+}
+
+.card-drawing img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    backface-visibility: hidden;
+}
+
+.card-drawing .card-back {
+    transform: rotateY(0deg);
+}
+
+.card-drawing .card-front {
+    transform: rotateY(180deg);
+}
+
+.card-drawing.animating {
+    transition: left 0.5s ease-out 0.4s, top 0.5s ease-out 0.4s, transform 0.4s ease-in-out;
+}
+
+.board-card-reveal {
+    transform-style: preserve-3d;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.board-card-reveal.flipping {
+    animation: card-flip 0.3s ease-in-out forwards;
+}
+
+@keyframes card-flip {
+    0% {
+        transform: rotateY(0deg);
+    }
+
+    100% {
+        transform: rotateY(180deg);
+    }
+}
+
+.board-card-reveal .card-face {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    backface-visibility: hidden;
+    object-fit: cover;
+}
+
+.board-card-reveal .card-back-face {
+    transform: rotateY(0deg);
+}
+
+.board-card-reveal .card-front-face {
+    transform: rotateY(180deg);
+}
+
+.victory-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 20000;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.victory-overlay.show {
+    opacity: 1;
+}
+
+.victory-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    background: #2E2C39;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 50px 60px;
+    z-index: 20001;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    min-width: 400px;
+    font-family: 'Signika Negative', sans-serif;
+}
+
+.victory-modal.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.victory-trophy {
+    font-size: 120px;
+    margin-bottom: 20px;
+    animation: trophy-bounce 0.8s ease infinite alternate;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes trophy-bounce {
+    from {
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        transform: translateY(-20px) scale(1.1);
+    }
+}
+
+.victory-text h1 {
+    font-size: 48px;
+    font-weight: 400;
+    color: #F2F2F2;
+    margin: 0 0 15px 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    font-family: 'Signika Negative', sans-serif;
+    letter-spacing: 1px;
+}
+
+.victory-text p {
+    font-size: 18px;
+    color: rgba(242, 242, 242, 0.7);
+    margin: 0 0 30px 0;
+    font-family: 'Signika Negative', sans-serif;
+}
+
+.victory-buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.confetti-container {
+    position: fixed;
+    top: -10px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 20002;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #f0f;
+    top: -10px;
+    opacity: 0;
+    animation: confetti-fall 3s linear infinite;
+}
+
+@keyframes confetti-fall {
+    0% {
+        top: -10%;
+        opacity: 1;
+        transform: rotate(0deg);
+    }
+
+    100% {
+        top: 110%;
+        opacity: 0.3;
+        transform: rotate(720deg);
+    }
+}
+
+.shuffle-animation-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10000;
+}
+
+.shuffle-card {
+    position: absolute;
+    width: 60px;
+    height: 90px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transform-origin: center;
+}
+
+.shuffle-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .victory-modal {
+        min-width: 90%;
+        padding: 40px 30px;
+    }
+
+    .victory-trophy {
+        font-size: 80px;
+    }
+
+    .victory-text h1 {
+        font-size: 36px;
+    }
+
+    .victory-text p {
+        font-size: 16px;
+    }
+
+    .victory-buttons {
+        flex-direction: column;
+    }
 }

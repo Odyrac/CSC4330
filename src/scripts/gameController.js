@@ -1,5 +1,12 @@
 (function (global) {
     function setupGame() {
+        try {
+            const qs = (function () { try { return window.location && window.location.search ? window.location.search : ''; } catch (e) { return ''; } })();
+            const params = new URLSearchParams(qs);
+            let botEnabled = false;
+            if (params.has('bot')) botEnabled = true;
+            window._botEnabled = botEnabled;
+        } catch (e) { window._botEnabled = false; }
         const deck = Deck.buildDeck();
         const shuffled = Deck.shuffleDeck(deck);
         const { hand1, hand2, initialBoard } = Deck.dealDeck(shuffled);
@@ -30,17 +37,71 @@
 
         function getCurrentTurn() { return gameState.currentPlayerId; }
 
+        function checkVictory() {
+            if (player.facedown.length === 0 && player.discard.length === 0 && !player.current) {
+                setTimeout(() => {
+                    if (window.Animations && window.Animations.animateVictory) {
+                        window.Animations.animateVictory('player');
+                    }
+                }, 300);
+                return true;
+            }
+            if (opponent.facedown.length === 0 && opponent.discard.length === 0 && !opponent.current) {
+                setTimeout(() => {
+                    if (window.Animations && window.Animations.animateVictory) {
+                        window.Animations.animateVictory('opponent');
+                    }
+                }, 300);
+                return true;
+            }
+            return false;
+        }
+
         function setTurn(turn) {
             if (turn !== 'player' && turn !== 'opponent') return;
             gameState.currentPlayerId = turn;
             try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', gameState.currentPlayerId); } catch (e) { }
+
+            setTimeout(() => checkVictory(), 100);
+
+            try {
+                if (window.Bot && window.Bot.playBot && window._botEnabled) {
+                    maybeRunBot();
+                }
+            } catch (e) { }
+        }
+
+        function maybeRunBot() {
+            try {
+                if (gameState.currentPlayerId !== 'opponent') return;
+                setTimeout(async () => {
+                    try {
+                        const res = window.Bot.playBot(gameState);
+                        if (res && typeof res.then === 'function') {
+                            await res;
+                        }
+                        try { UI.renderTurnIndicator('turnIndicator', gameState.currentPlayerId); } catch (e) { }
+                        try { UI.renderFacedown(playerFacedown, player.facedown); } catch (e) { }
+                        try { UI.renderFacedown(opponentFacedown, opponent.facedown); } catch (e) { }
+                        try { UI.renderDiscard(playerDiscard, player.discard); } catch (e) { }
+                        try { UI.renderDiscard(opponentDiscard, opponent.discard); } catch (e) { }
+                        try { UI.renderCurrent(playerCurrent, player.current); } catch (e) { }
+                        try { UI.renderCurrent(opponentCurrent, opponent.current); } catch (e) { }
+                        if (boardSlots && boardSlots.length) boardSlots.forEach((slotEl, idx) => UI.renderBoardSlot(slotEl, gameState.board[idx]));
+                        if (trumpPileEls && trumpPileEls.length) trumpPileEls.forEach((el, idx) => UI.renderSmallPile(el, gameState.trumpPiles[idx]));
+                        if (foundationPileEls && foundationPileEls.length) foundationPileEls.forEach((el, idx) => UI.renderSmallPile(el, gameState.foundationPiles[idx]));
+                    } catch (e) { }
+                }, 250);
+            } catch (e) { }
         }
 
         UI.renderFacedown(playerFacedown, player.facedown);
         UI.renderFacedown(opponentFacedown, opponent.facedown);
         try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', getCurrentTurn()); } catch (e) { }
 
-        function moveToCurrent(side, facedownEl, currentEl, discardEl) {
+        async function moveToCurrent(side, facedownEl, currentEl, discardEl) {
+            // If the bot is playing, prevent user interaction
+            try { if (window.Bot && window.Bot.isPlaying && !(window.Bot._internalAction === true)) return; } catch (e) { }
             const owner = (side === player) ? 'player' : (side === opponent) ? 'opponent' : null;
             if (owner && getCurrentTurn() !== owner) {
                 const msg = "It's not your turn to draw.";
@@ -51,23 +112,44 @@
             if (side.current) return;
 
             if (side.facedown.length === 0) {
-                Deck.replenishFromDiscard(side);
-                UI.renderFacedown(facedownEl, side.facedown);
-                UI.renderDiscard(discardEl, side.discard);
+                if (side.discard.length === 0) {
+                    if (checkVictory()) {
+                        return;
+                    }
+                    return;
+                }
+
+                if (window.Animations && window.Animations.animateShuffleReplenish) {
+                    await new Promise(resolve => {
+                        window.Animations.animateShuffleReplenish(discardEl, facedownEl, () => {
+                            Deck.replenishFromDiscard(side);
+                            UI.renderFacedown(facedownEl, side.facedown);
+                            UI.renderDiscard(discardEl, side.discard);
+                            resolve();
+                        });
+                    });
+                } else {
+                    Deck.replenishFromDiscard(side);
+                    UI.renderFacedown(facedownEl, side.facedown);
+                    UI.renderDiscard(discardEl, side.discard);
+                }
             }
 
-            if (side.facedown.length === 0 && side.discard.length === 0 && !side.current) {
-                const msg = 'This player has no more cards, he/she wins!';
-                if (window.Toast && window.Toast.show) window.Toast.show(msg, 4000);
-                else alert(msg);
+            // Check victory after attempting to draw
+            if (checkVictory()) {
                 return;
             }
 
             const card = side.facedown.shift();
             side.current = card;
+
             UI.renderFacedown(facedownEl, side.facedown);
-            UI.renderCurrent(currentEl, card);
-            UI.renderDiscard(discardEl, side.discard);
+
+            side._cancelDrawAnimation = Animations.animateCardDraw(facedownEl, currentEl, card, () => {
+                side._cancelDrawAnimation = null;
+                UI.renderCurrent(currentEl, card);
+                UI.renderDiscard(discardEl, side.discard);
+            });
         }
 
         playerFacedown.addEventListener('click', () => moveToCurrent(player, playerFacedown, playerCurrent, playerDiscard));
@@ -130,9 +212,19 @@
             }
         }
 
-        initialBoard.forEach((card, idx) => {
-            appendCardToBoard(idx, 'board', card);
-        });
+        if (window.Animations && window.Animations.animateBoardReveal) {
+            Animations.animateBoardReveal(boardSlots, initialBoard).then(() => {
+                initialBoard.forEach((card, idx) => {
+                    if (idx >= 0 && idx < board.length) {
+                        board[idx].push(card);
+                    }
+                });
+            });
+        } else {
+            initialBoard.forEach((card, idx) => {
+                appendCardToBoard(idx, 'board', card);
+            });
+        }
 
         boardSlots.forEach((slotEl, idx) => {
             if (!slotEl) return;
@@ -293,6 +385,8 @@
                     setTurn('player');
                 }
             }
+            // Check victory after discard
+            setTimeout(() => checkVictory(), 200);
         }
 
         playerDiscard.__appendCardFor = function (owner, card) { appendCardToPile(playerDiscard, owner, card); };
@@ -371,13 +465,23 @@
             });
         });
 
-        playerCurrent.addEventListener('mousedown', (e) => DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
-            UI.renderCurrent(playerCurrent, fromSide.current);
-        }));
+        playerCurrent.addEventListener('mousedown', (e) => {
+            DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
+                if (!fromSide.current && player._cancelDrawAnimation) {
+                    player._cancelDrawAnimation();
+                    player._cancelDrawAnimation = null;
+                }
+                UI.renderCurrent(playerCurrent, fromSide.current);
+            });
+        });
         playerCurrent.addEventListener && playerCurrent.addEventListener('pointerdown', (e) => {
             e.preventDefault && e.preventDefault();
             e.stopPropagation && e.stopPropagation();
             DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
+                if (!fromSide.current && player._cancelDrawAnimation) {
+                    player._cancelDrawAnimation();
+                    player._cancelDrawAnimation = null;
+                }
                 UI.renderCurrent(playerCurrent, fromSide.current);
             });
         });
@@ -385,17 +489,31 @@
             e.preventDefault && e.preventDefault();
             e.stopPropagation && e.stopPropagation();
             DragDrop.onMouseDown(e, player, playerCurrent, (fromSide) => {
+                if (!fromSide.current && player._cancelDrawAnimation) {
+                    player._cancelDrawAnimation();
+                    player._cancelDrawAnimation = null;
+                }
                 UI.renderCurrent(playerCurrent, fromSide.current);
             });
         });
 
-        opponentCurrent.addEventListener('mousedown', (e) => DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
-            UI.renderCurrent(opponentCurrent, fromSide.current);
-        }));
+        opponentCurrent.addEventListener('mousedown', (e) => {
+            DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
+                if (!fromSide.current && opponent._cancelDrawAnimation) {
+                    opponent._cancelDrawAnimation();
+                    opponent._cancelDrawAnimation = null;
+                }
+                UI.renderCurrent(opponentCurrent, fromSide.current);
+            });
+        });
         opponentCurrent.addEventListener && opponentCurrent.addEventListener('pointerdown', (e) => {
             e.preventDefault && e.preventDefault();
             e.stopPropagation && e.stopPropagation();
             DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
+                if (!fromSide.current && opponent._cancelDrawAnimation) {
+                    opponent._cancelDrawAnimation();
+                    opponent._cancelDrawAnimation = null;
+                }
                 UI.renderCurrent(opponentCurrent, fromSide.current);
             });
         });
@@ -403,6 +521,10 @@
             e.preventDefault && e.preventDefault();
             e.stopPropagation && e.stopPropagation();
             DragDrop.onMouseDown(e, opponent, opponentCurrent, (fromSide) => {
+                if (!fromSide.current && opponent._cancelDrawAnimation) {
+                    opponent._cancelDrawAnimation();
+                    opponent._cancelDrawAnimation = null;
+                }
                 UI.renderCurrent(opponentCurrent, fromSide.current);
             });
         });
