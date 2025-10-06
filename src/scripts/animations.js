@@ -62,10 +62,11 @@
             if (!clone) return;
             clone.classList.add('bot-dragging');
 
+            const dims = window.UI && window.UI.getCardDimensions ? window.UI.getCardDimensions() : { width: 100, height: 140 };
+            const offsetY = window.UI && window.UI.getCardOffsetY ? window.UI.getCardOffsetY() : 40;
+
             const fromRect = fromEl.getBoundingClientRect();
             const toRect = toEl.getBoundingClientRect();
-
-            const offsetY = 40;
 
             let startX = fromRect.left + fromRect.width / 2;
             let startY = fromRect.top + fromRect.height / 2;
@@ -76,7 +77,7 @@
                     const totalCards = existingCards.length;
                     const movedCount = cards.length;
                     const firstMovedCardIndex = totalCards - movedCount;
-                    startY = fromRect.top + (firstMovedCardIndex * offsetY) + 70;
+                    startY = fromRect.top + (firstMovedCardIndex * offsetY) + (dims.height / 2);
                 }
             }
 
@@ -86,7 +87,7 @@
             if (destType === 'board') {
                 const existingCards = toEl.querySelectorAll && toEl.querySelectorAll('.board-card');
                 const cardCount = existingCards ? existingCards.length : 0;
-                endY = toRect.top + (cardCount * offsetY) + 70;
+                endY = toRect.top + (cardCount * offsetY) + (dims.height / 2);
             }
 
             const cloneRect = clone.getBoundingClientRect();
@@ -276,6 +277,7 @@
 
         try { window._shuffleAnimationInProgress = true; } catch (e) { }
 
+        const dims = window.UI && window.UI.getCardDimensions ? window.UI.getCardDimensions() : { width: 100, height: 140 };
         const facedownRect = facedownEl.getBoundingClientRect();
 
         const animContainer = document.createElement('div');
@@ -292,10 +294,10 @@
         const centerX = facedownRect.left + facedownRect.width / 2;
         const centerY = facedownRect.top + facedownRect.height / 2;
 
-        const largeWidth = 100;
-        const largeHeight = 140;
-        const smallWidth = 60;
-        const smallHeight = 84;
+        const largeWidth = dims.width;
+        const largeHeight = dims.height;
+        const smallWidth = dims.width * 0.6;
+        const smallHeight = dims.height * 0.6;
 
         const numCards = 8;
         const cards = [];
