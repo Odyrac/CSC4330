@@ -18,9 +18,10 @@
     }
 
     function createStackClone(stack) {
-        const offsetY = 40;
-        const width = 100;
-        const height = 140 + (Math.max(0, stack.length - 1) * offsetY);
+        const dims = window.UI && window.UI.getCardDimensions ? window.UI.getCardDimensions() : { width: 100, height: 140 };
+        const offsetY = window.UI && window.UI.getCardOffsetY ? window.UI.getCardOffsetY() : 40;
+        const width = dims.width;
+        const height = dims.height + (Math.max(0, stack.length - 1) * offsetY);
         const wrapper = document.createElement('div');
         wrapper.style.position = 'fixed';
         wrapper.style.pointerEvents = 'none';
@@ -37,7 +38,7 @@
             img.style.left = '0';
             img.style.top = (i * offsetY) + 'px';
             img.style.width = width + 'px';
-            img.style.height = '140px';
+            img.style.height = dims.height + 'px';
             img.style.objectFit = 'cover';
             wrapper.appendChild(img);
         }
@@ -51,13 +52,14 @@
         if (cards.length > 1) {
             return createStackClone(cards);
         } else {
+            const dims = window.UI && window.UI.getCardDimensions ? window.UI.getCardDimensions() : { width: 100, height: 140 };
             const img = document.createElement('img');
             img.src = `src/assets/cards/${cards[0].id}.png`;
             img.alt = cards[0].id || 'card';
             img.style.position = 'fixed';
             img.style.pointerEvents = 'none';
-            img.style.width = '100px';
-            img.style.height = '140px';
+            img.style.width = dims.width + 'px';
+            img.style.height = dims.height + 'px';
             img.style.zIndex = '9999';
             img.classList.add('dragging-image');
             document.body.appendChild(img);
@@ -68,9 +70,10 @@
     function moveClone(pageX, pageY) {
         if (!dragState || !dragState.cloneEl) return;
         const clone = dragState.cloneEl;
-        const rect = clone.getBoundingClientRect ? clone.getBoundingClientRect() : { width: 100, height: 140 };
-        const w = rect.width || 100;
-        const h = rect.height || 140;
+        const dims = window.UI && window.UI.getCardDimensions ? window.UI.getCardDimensions() : { width: 100, height: 140 };
+        const rect = clone.getBoundingClientRect ? clone.getBoundingClientRect() : { width: dims.width, height: dims.height };
+        const w = rect.width || dims.width;
+        const h = rect.height || dims.height;
         const clientX = (typeof pageX === 'number') ? pageX - (window.pageXOffset || document.documentElement.scrollLeft || 0) : 0;
         const clientY = (typeof pageY === 'number') ? pageY - (window.pageYOffset || document.documentElement.scrollTop || 0) : 0;
         clone.style.left = Math.max(0, clientX - w / 2) + 'px';

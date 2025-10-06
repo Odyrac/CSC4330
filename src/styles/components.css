@@ -55,6 +55,15 @@
     pointer-events: none;
 }
 
+@media (max-width: 768px) {
+    #toast-container {
+        right: 10px;
+        bottom: 10px;
+        left: 10px;
+        align-items: center;
+    }
+}
+
 .toast {
     min-width: 260px;
     max-width: 360px;
@@ -72,6 +81,15 @@
     opacity: 0;
     transition: transform 260ms cubic-bezier(.2, .9, .2, 1), opacity 260ms ease;
     position: relative;
+}
+
+@media (max-width: 768px) {
+    .toast {
+        min-width: 200px;
+        max-width: 90%;
+        font-size: 12px;
+        padding: 10px 12px 14px 12px;
+    }
 }
 
 .toast-progress {

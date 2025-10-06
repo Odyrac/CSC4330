@@ -1,4 +1,14 @@
 (function (global) {
+    function getCardDimensions() {
+        const width = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-width')) || 100;
+        const height = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-height')) || 140;
+        return { width, height };
+    }
+
+    function getCardOffsetY() {
+        return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--board-offset-y')) || 40;
+    }
+
     function clear(container) {
         container.innerHTML = '';
     }
@@ -42,7 +52,7 @@
     function renderBoardSlot(slotEl, cards) {
         clear(slotEl);
         const stack = Array.isArray(cards) ? cards : [];
-        const offsetY = 40;
+        const offsetY = getCardOffsetY();
         for (let i = 0; i < stack.length; i++) {
             const card = stack[i];
             const wrapper = document.createElement('div');
@@ -84,6 +94,8 @@
         renderDiscard,
         renderBoardSlot,
         renderSmallPile,
-        renderTurnIndicator
+        renderTurnIndicator,
+        getCardDimensions,
+        getCardOffsetY
     };
 })(window);
