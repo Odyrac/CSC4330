@@ -1,7 +1,7 @@
 (function (global) {
     const suits = ['heart', 'diamond', 'club', 'spade'];
-    const ranks = ['A', '2'];
-    const trumps = Array.from({ length: 2 }, (_, i) => i + 1);
+    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K'];
+    const trumps = Array.from({ length: 21 }, (_, i) => i + 1);
 
     function buildDeck() {
         const deck = [];
