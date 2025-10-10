@@ -120,3 +120,439 @@
     transform: translateY(8px) scale(0.98);
     opacity: 0;
 }
+
+.multiplayer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 20000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.multiplayer-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.multiplayer-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    background: #2E2C39;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 40px 50px;
+    z-index: 20001;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    min-width: 450px;
+    max-width: 550px;
+    font-family: 'Signika Negative', sans-serif;
+    max-height: 90vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.multiplayer-modal::-webkit-scrollbar {
+    display: none;
+}
+
+.multiplayer-modal.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.multiplayer-text h1 {
+    font-size: 42px;
+    font-weight: 400;
+    color: #F2F2F2;
+    margin: 0 0 10px 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    font-family: 'Signika Negative', sans-serif;
+    letter-spacing: 1px;
+}
+
+.multiplayer-text p {
+    font-size: 16px;
+    color: rgba(242, 242, 242, 0.7);
+    margin: 0 0 30px 0;
+    font-family: 'Signika Negative', sans-serif;
+}
+
+.multiplayer-section {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.multiplayer-section h3 {
+    color: rgba(242, 242, 242, 0.9);
+    font-size: 18px;
+    margin: 0 0 15px 0;
+    font-family: 'Signika Negative', sans-serif;
+    font-weight: 400;
+}
+
+.room-pin-container {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.5s ease;
+    max-height: 0;
+    overflow: hidden;
+}
+
+.room-pin-container.show {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 300px;
+    margin-top: 15px;
+}
+
+.pin-label {
+    color: rgba(242, 242, 242, 0.7);
+    text-align: center;
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+.room-pin-display {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 12px;
+    margin: 15px 0;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.pin-digit {
+    font-size: 48px;
+    font-weight: bold;
+    color: #F2F2F2;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    animation: digit-pop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    opacity: 0;
+    transform: scale(0);
+}
+
+@keyframes digit-pop {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.pin-input-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 15px 0;
+}
+
+.pin-digit-input {
+    width: 60px;
+    height: 70px;
+    padding: 0;
+    font-size: 32px;
+    font-weight: bold;
+    text-align: center;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #F2F2F2;
+    font-family: 'Courier New', monospace;
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    caret-color: #F2F2F2;
+}
+
+.pin-digit-input:focus {
+    border-color: rgba(76, 175, 80, 0.5);
+    background: rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.2);
+    transform: scale(1.05);
+}
+
+.pin-digit-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.multiplayer-button {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 16px;
+    font-weight: 400;
+    color: #F2F2F2;
+    background: rgba(242, 242, 242, 0.08);
+    border: 1px solid rgba(242, 242, 242, 0.15);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Signika Negative', sans-serif;
+    margin: 8px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.multiplayer-button:hover:not(:disabled) {
+    background: rgba(242, 242, 242, 0.12);
+    border-color: rgba(242, 242, 242, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.multiplayer-button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.multiplayer-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.multiplayer-button-primary {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.multiplayer-button-primary:hover:not(:disabled) {
+    background: rgba(76, 175, 80, 0.25);
+    border-color: rgba(76, 175, 80, 0.4);
+}
+
+.multiplayer-button-danger {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: rgba(244, 67, 54, 0.3);
+}
+
+.multiplayer-button-danger:hover:not(:disabled) {
+    background: rgba(244, 67, 54, 0.25);
+    border-color: rgba(244, 67, 54, 0.4);
+}
+
+.multiplayer-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.multiplayer-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    text-align: center;
+    font-size: 14px;
+    color: #F2F2F2;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.multiplayer-status-waiting {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+.multiplayer-status-ready {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.multiplayer-status-error {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: rgba(244, 67, 54, 0.3);
+}
+
+.multiplayer-status-connecting {
+    background: rgba(33, 150, 243, 0.15);
+    border-color: rgba(33, 150, 243, 0.3);
+}
+
+.connection-status {
+    display: none;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    text-align: center;
+    font-size: 14px;
+    color: #F2F2F2;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.connection-status.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.connection-status-waiting {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+.connection-status-ready {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.connection-status-error {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: rgba(244, 67, 54, 0.3);
+}
+
+.connection-status-connecting {
+    background: rgba(33, 150, 243, 0.15);
+    border-color: rgba(33, 150, 243, 0.3);
+}
+
+.divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    margin: 20px 0;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(242, 242, 242, 0.2);
+    border-radius: 50%;
+    border-top-color: #F2F2F2;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .multiplayer-modal {
+        min-width: 85%;
+        max-width: 90%;
+        padding: 30px 25px;
+    }
+
+    .multiplayer-text h1 {
+        font-size: 32px;
+        margin: 0 0 8px 0;
+    }
+
+    .multiplayer-text p {
+        font-size: 14px;
+        margin: 0 0 20px 0;
+    }
+
+    .multiplayer-section {
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
+    .multiplayer-section h3 {
+        font-size: 16px;
+        margin: 0 0 12px 0;
+    }
+
+    .room-pin-display {
+        gap: 8px;
+        padding: 15px;
+    }
+
+    .pin-digit {
+        font-size: 36px;
+    }
+
+    .pin-input-container {
+        gap: 8px;
+    }
+
+    .pin-digit-input {
+        width: 50px;
+        height: 60px;
+        font-size: 28px;
+    }
+
+    .multiplayer-button {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .multiplayer-modal {
+        padding: 20px 15px;
+    }
+
+    .multiplayer-text h1 {
+        font-size: 26px;
+    }
+
+    .multiplayer-text p {
+        font-size: 12px;
+        margin: 0 0 15px 0;
+    }
+
+    .multiplayer-section {
+        padding: 12px;
+    }
+
+    .multiplayer-section h3 {
+        font-size: 14px;
+    }
+
+    .room-pin-display {
+        gap: 5px;
+        padding: 12px;
+    }
+
+    .pin-digit {
+        font-size: 28px;
+    }
+
+    .pin-input-container {
+        gap: 6px;
+    }
+
+    .pin-digit-input {
+        width: 45px;
+        height: 55px;
+        font-size: 24px;
+    }
+
+    .multiplayer-button {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+
+    .multiplayer-button .button-icon {
+        font-size: 16px;
+    }
+}

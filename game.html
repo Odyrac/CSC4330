@@ -11,8 +11,13 @@
     <link rel="stylesheet" href="src/styles/components.css">
     <link rel="stylesheet" href="src/styles/game.css">
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
     <script src="src/scripts/components/Button.js"></script>
     <script src="src/scripts/components/Toast.js"></script>
+    <script src="src/scripts/components/MultiplayerModal.js"></script>
+    <script src="src/scripts/components/VictoryModal.js"></script>
     <script src="src/scripts/url.js"></script>
     <script src="src/scripts/deck.js"></script>
     <script src="src/scripts/ui.js"></script>
@@ -20,7 +25,12 @@
     <script src="src/scripts/rules.js"></script>
     <script src="src/scripts/dragdrop.js"></script>
     <script src="src/scripts/bot.js"></script>
+    <script src="src/scripts/firebaseConfig.js"></script>
+    <script src="src/scripts/roomManager.js"></script>
+    <script src="src/scripts/webrtcConnection.js"></script>
+    <script src="src/scripts/multiplayerSync.js"></script>
     <script src="src/scripts/gameController.js"></script>
+    <script src="src/scripts/gameMultiplayerBootstrap.js"></script>
 </head>
 
 <body>
@@ -85,7 +95,7 @@
         </script>
     </div>
 
-    <div id="turnIndicator">Player's turn</div>
+    <div id="turnIndicator">Loading...</div>
 </body>
 
 </html>

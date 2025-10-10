@@ -228,6 +228,18 @@
             try { return Array.isArray(el && el.__cards) && el.__cards.length ? el.__cards[el.__cards.length - 1] : null; } catch (err) { return null; }
         }
 
+        if (target && target.type === 'board' && dragState && dragState.fromBoardSlot !== undefined) {
+            const targetSlotIndex = target.index;
+            if (dragState.fromBoardSlot === targetSlotIndex) {
+                if (dragState && dragState.cloneEl && dragState.cloneEl.parentNode) {
+                    dragState.cloneEl.parentNode.removeChild(dragState.cloneEl);
+                }
+                dragState = null;
+                clearHighlight();
+                return;
+            }
+        }
+
         if (target && fromSide && target.type !== 'excuse') {
             if (fromSide.stack && Array.isArray(fromSide.stack) && fromSide.stack.length > 0) {
                 const cardsToMove = fromSide.stack.slice();
@@ -258,6 +270,38 @@
                 }
                 fromSide.movedCount = movedCountLocal;
                 dragState.onMoved && dragState.onMoved(fromSide);
+                try {
+                    if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                        window.MultiplayerSync.sendGameStateUpdate && window.MultiplayerSync.sendGameStateUpdate({ midTurn: true });
+                    }
+                } catch (e) { }
+
+                try {
+                    if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled() &&
+                        window.MultiplayerSync.isMyTurn && window.MultiplayerSync.isMyTurn()) {
+                        let src;
+                        if (dragState.fromBoardSlot !== undefined) {
+                            src = { type: 'board', index: dragState.fromBoardSlot };
+                        } else if (dragState.currentEl === playerDiscardEl || dragState.currentEl === opponentDiscardEl) {
+                            const side = (dragState.currentEl === playerDiscardEl) ? 'player' : 'opponent';
+                            src = { type: 'discard', side };
+                        } else {
+                            src = (fromSide.current ? { type: 'current' } : { type: 'stack' });
+                        }
+
+                        const action = {
+                            type: 'move',
+                            actor: (function () {
+                                try { const gs = window.GameState; return (fromSide === gs.players.player || fromSide.owner === 'player') ? 'player' : 'opponent'; } catch (e) { return 'player'; }
+                            })(),
+                            cards: cardsToMove.map(c => c && c.id).filter(Boolean),
+                            dest: target.type,
+                            destIndex: (typeof target.index === 'number') ? target.index : undefined,
+                            source: src
+                        };
+                        window.MultiplayerSync.sendGameAction && window.MultiplayerSync.sendGameAction(action);
+                    }
+                } catch (e) { }
             } else if (fromSide.current) {
                 const card = fromSide.current;
                 let moved = false;
@@ -278,6 +322,38 @@
                     fromSide.current = null;
                 }
                 dragState.onMoved && dragState.onMoved(fromSide);
+                try {
+                    if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                        window.MultiplayerSync.sendGameStateUpdate && window.MultiplayerSync.sendGameStateUpdate({ midTurn: true });
+                    }
+                } catch (e) { }
+
+                try {
+                    if (moved && window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled() &&
+                        window.MultiplayerSync.isMyTurn && window.MultiplayerSync.isMyTurn()) {
+                        let src;
+                        if (dragState.fromBoardSlot !== undefined) {
+                            src = { type: 'board', index: dragState.fromBoardSlot };
+                        } else if (dragState.currentEl === playerDiscardEl || dragState.currentEl === opponentDiscardEl) {
+                            const side = (dragState.currentEl === playerDiscardEl) ? 'player' : 'opponent';
+                            src = { type: 'discard', side };
+                        } else {
+                            src = { type: 'current' };
+                        }
+
+                        const action = {
+                            type: 'move',
+                            actor: (function () {
+                                try { const gs = window.GameState; return (fromSide === gs.players.player || fromSide.owner === 'player') ? 'player' : 'opponent'; } catch (e) { return 'player'; }
+                            })(),
+                            cards: [card && card.id].filter(Boolean),
+                            dest: target.type,
+                            destIndex: (typeof target.index === 'number') ? target.index : undefined,
+                            source: src
+                        };
+                        window.MultiplayerSync.sendGameAction && window.MultiplayerSync.sendGameAction(action);
+                    }
+                } catch (e) { }
             }
         }
 
@@ -459,6 +535,36 @@
                         if (dragState && dragState.cloneEl && dragState.cloneEl.parentNode) dragState.cloneEl.parentNode.removeChild(dragState.cloneEl);
                         dragState = null;
                         clearHighlight();
+
+                        try {
+                            if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                                let actor = 'player';
+                                try { const gs2 = window.GameState; if (gs2 && gs2.currentPlayerId) actor = gs2.currentPlayerId; } catch (e) { }
+
+                                let src;
+                                if (origin && (origin.type === 'board' || origin.type === 'trump' || origin.type === 'foundation')) {
+                                    src = { type: origin.type, index: origin.pileIndex };
+                                } else if (fromSide && fromSide.current !== undefined) {
+                                    try {
+                                        const gs3 = window.GameState;
+                                        const side = (fromSide === gs3.players.player) ? 'player' : (fromSide === gs3.players.opponent ? 'opponent' : actor);
+                                        src = { type: 'current', side };
+                                    } catch (e) { src = { type: 'current', side: actor }; }
+                                } else {
+                                    src = { type: 'stack' };
+                                }
+
+                                const action = {
+                                    type: 'excuse_replace',
+                                    actor,
+                                    source: src,
+                                    dest: { type: loc.type, index: loc.pileIndex },
+                                    cards: cardsToMove.map(c => c && c.id).filter(Boolean)
+                                };
+                                window.MultiplayerSync.sendGameAction && window.MultiplayerSync.sendGameAction(action);
+                                window.MultiplayerSync.sendGameStateUpdate && window.MultiplayerSync.sendGameStateUpdate({ midTurn: true });
+                            }
+                        } catch (e) { }
                     } catch (err) {
                         clearHighlight();
                     }
@@ -492,9 +598,19 @@
         finishDragAt(coords.clientX, coords.clientY);
     }
 
-    function onMouseDown(e, side, currentEl, onMoved) {
+    function onMouseDown(e, side, currentEl, onMoved, fromBoardSlot) {
         // If the bot is currently playing, ignore user drag attempts
         try { if (window.Bot && window.Bot.isPlaying && !(window.Bot._internalAction === true)) return; } catch (err) { }
+
+        try {
+            if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                if (window.MultiplayerSync.isMyTurn && !window.MultiplayerSync.isMyTurn()) {
+                    return;
+                }
+            }
+        } catch (err) {
+        }
+
         if (dragState) return;
         if (!side.current && !(side.stack && side.stack.length)) return;
         e.preventDefault();
@@ -514,7 +630,7 @@
 
         if (side.stack && Array.isArray(side.stack) && side.stack.length > 0) {
             const clone = createStackClone(side.stack);
-            dragState = { side, currentEl, stack: side.stack.slice(), cloneEl: clone, onMoved };
+            dragState = { side, currentEl, stack: side.stack.slice(), cloneEl: clone, onMoved, fromBoardSlot };
             const coords = getEventCoords(e);
             moveClone(coords.pageX, coords.pageY);
             window.addEventListener('mousemove', onMouseMove);
@@ -537,7 +653,7 @@
 
         if (!sourceImg) return;
         const clone = createCloneImage(sourceImg);
-        dragState = { side, currentEl, card: side.current, cloneEl: clone, onMoved };
+        dragState = { side, currentEl, card: side.current, cloneEl: clone, onMoved, fromBoardSlot };
         const coords = getEventCoords(e);
         moveClone(coords.pageX, coords.pageY);
         window.addEventListener('mousemove', onMouseMove);

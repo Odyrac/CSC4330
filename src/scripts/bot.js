@@ -134,8 +134,10 @@
                     b.style.zIndex = 9998;
                     b.style.background = 'transparent';
                     b.style.cursor = 'wait';
+                    b.style.pointerEvents = 'none';
                     document.body.appendChild(b);
                 }
+                b.style.pointerEvents = 'none';
                 b.style.display = 'block';
             } catch (e) { }
         }
