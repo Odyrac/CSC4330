@@ -110,23 +110,6 @@
             }
         }
 
-        // Disallow moving the excuse to trump or foundation piles if it's on the board and not the top card
-        if ((destinationType === 'trump' || destinationType === 'foundation') && cardFrom.id === 'excuse') {
-            let foundOnBoard = false;
-            for (let pile of gs.board) {
-                if (pile.includes(cardFrom) && pile.length > 1) {
-                    foundOnBoard = true;
-                    break;
-                }
-            }
-            if (foundOnBoard) {
-                const msg = "The excuse card is already replacing another card.";
-                if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
-                else alert(msg);
-                return { allowed: false };
-            }
-        }
-
         // Disallow moving multiple cards to the excuse pile
         if (destinationType === 'excuse' && moveType === 'multiple') {
             const msg = "You can only move one card at a time to the excuse pile.";
@@ -140,8 +123,34 @@
         /*if (cardTo && cardFrom.id === 'excuse') {
         }*/
 
+        // Disallow moving the excuse to trump or foundation piles if it's on the board and not the top card or the right card to be played
+        let excuseOnBoard = false;
+        if ((destinationType === 'trump' || destinationType === 'foundation') && cardFrom.id === 'excuse') {
+            for (let pile of gs.board) {
+                if (pile.includes(cardFrom) && pile.length > 1) {
+                    excuseOnBoard = true;
+                    break;
+                }
+            }
+
+            if (excuseOnBoard) {
+                cardFrom = getExcuseState();
+
+                if (!cardFrom) {
+                    const msg = "Cannot determine the state of the excuse card.";
+                    if (window.Toast && window.Toast.show) window.Toast.show(msg, 3000);
+                    else alert(msg);
+                    return { allowed: false };
+                }
+
+                if (cardFrom.allowed === false) {
+                    return { allowed: false };
+                }
+            }
+        }
+
         // Allow moving the excuse card anywhere else
-        if (cardFrom.id === 'excuse') {
+        if (cardFrom.id === 'excuse' && excuseOnBoard === false) {
             return { allowed: true };
         }
 
@@ -242,6 +251,7 @@
             let msg = null;
 
             if (!excuseState) msg = "Cannot determine the state of the excuse card.";
+            else if (excuseState.allowed === false) return { allowed: false };
 
             if (excuseState && excuseState.suit) {
                 if (cardFrom.suit !== excuseState.suit || cardFrom.rank !== excuseState.rank || cardFrom.type !== excuseState.type) {
