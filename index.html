@@ -19,9 +19,11 @@
 
     <h1 id="title">Chaoui</h1>
     <script>
-        createButton('Play locally', 'play', function () { window.location.href = 'game.html'; });
-
         createButton('Play a bot', 'bot', function () { window.location.href = 'game.html?bot'; });
+
+        createButton('Play locally', 'local', function () { window.location.href = 'game.html'; });
+
+        createButton('Play a friend', 'multiplayer', function () { window.location.href = 'game.html?multiplayer'; });
     </script>
 </body>
 

@@ -1,15 +1,48 @@
 (function (global) {
-    function setupGame() {
+    function setupGame(initialGameState = null) {
         try {
             const qs = (function () { try { return window.location && window.location.search ? window.location.search : ''; } catch (e) { return ''; } })();
             const params = new URLSearchParams(qs);
             let botEnabled = false;
+            let multiplayerEnabled = false;
             if (params.has('bot')) botEnabled = true;
+            if (params.has('multiplayer')) multiplayerEnabled = true;
             window._botEnabled = botEnabled;
-        } catch (e) { window._botEnabled = false; }
-        const deck = Deck.buildDeck();
-        const shuffled = Deck.shuffleDeck(deck);
-        const { hand1, hand2, initialBoard } = Deck.dealDeck(shuffled);
+            window._multiplayerEnabled = multiplayerEnabled;
+        } catch (e) {
+            window._botEnabled = false;
+            window._multiplayerEnabled = false;
+        }
+
+        let iAmGuest = false;
+        try {
+            if (window.RoomManager && typeof RoomManager.isGuest === 'function') {
+                iAmGuest = !!RoomManager.isGuest();
+            } else if (window.MultiplayerModal && typeof window.MultiplayerModal._reconnectionRole === 'function') {
+                iAmGuest = (window.MultiplayerModal._reconnectionRole() === 'guest');
+            }
+        } catch (_) { iAmGuest = false; }
+
+        let deck, shuffled, hand1, hand2, initialBoard;
+        let receivedBoard = null;
+        let receivedTrumpPiles = null;
+        let receivedFoundationPiles = null;
+
+        if (initialGameState) {
+            hand1 = initialGameState.players.opponent.facedown.slice();
+            hand2 = initialGameState.players.player.facedown.slice();
+            receivedBoard = initialGameState.board.map(slot => slot.slice());
+            receivedTrumpPiles = initialGameState.trumpPiles.map(pile => pile.slice());
+            receivedFoundationPiles = initialGameState.foundationPiles.map(pile => pile.slice());
+            initialBoard = [];
+        } else {
+            deck = Deck.buildDeck();
+            shuffled = Deck.shuffleDeck(deck);
+            const dealResult = Deck.dealDeck(shuffled);
+            hand1 = dealResult.hand1;
+            hand2 = dealResult.hand2;
+            initialBoard = dealResult.initialBoard;
+        }
 
         const playerFacedown = document.getElementById('playerFacedown');
         const playerCurrent = document.getElementById('playerCurrent');
@@ -19,31 +52,71 @@
         const opponentCurrent = document.getElementById('opponentCurrent');
         const opponentDiscard = document.getElementById('opponentDiscard');
 
-        const player = { facedown: hand1.slice(), current: null, discard: [] };
-        const opponent = { facedown: hand2.slice(), current: null, discard: [] };
+        let srcMe = null, srcOpp = null;
+        if (initialGameState) {
+            srcMe = initialGameState.players.opponent;
+            srcOpp = initialGameState.players.player;
+        }
+
+        const player = {
+            facedown: hand1.slice(),
+            current: srcMe ? srcMe.current : null,
+            discard: srcMe ? (srcMe.discard ? srcMe.discard.slice() : []) : []
+        };
+        const opponent = {
+            facedown: hand2.slice(),
+            current: srcOpp ? srcOpp.current : null,
+            discard: srcOpp ? (srcOpp.discard ? srcOpp.discard.slice() : []) : []
+        };
+
+        let initialTurn = 'player';
+        if (initialGameState && initialGameState.currentPlayerId) {
+            initialTurn = initialGameState.currentPlayerId === 'player' ? 'opponent' : 'player';
+        }
 
         const gameState = {
-            currentPlayerId: 'player',
+            currentPlayerId: initialTurn,
             players: {
                 player: player,
                 opponent: opponent
             },
-            board: [[], [], [], [], [], []],
-            trumpPiles: [[], []],
-            foundationPiles: [[], [], [], []]
+            board: receivedBoard || [[], [], [], [], [], []],
+            trumpPiles: receivedTrumpPiles || [[], []],
+            foundationPiles: receivedFoundationPiles || [[], [], [], []]
         };
 
         try { window.GameState = gameState; } catch (e) { }
 
+        try {
+            playerDiscard.__cards = player.discard;
+            opponentDiscard.__cards = opponent.discard;
+
+            UI.renderFacedown(playerFacedown, player.facedown);
+            UI.renderFacedown(opponentFacedown, opponent.facedown);
+            UI.renderCurrent(playerCurrent, player.current);
+            UI.renderCurrent(opponentCurrent, opponent.current);
+            UI.renderDiscard(playerDiscard, player.discard);
+            UI.renderDiscard(opponentDiscard, opponent.discard);
+            UI.renderTurnIndicator('turnIndicator', gameState.currentPlayerId);
+        } catch (e) { }
+
         function getCurrentTurn() { return gameState.currentPlayerId; }
 
         function checkVictory() {
+            try { if (window._gameOverDisplayed) return true; } catch (e) { }
             if (player.facedown.length === 0 && player.discard.length === 0 && !player.current) {
                 setTimeout(() => {
                     if (window.Animations && window.Animations.animateVictory) {
                         window.Animations.animateVictory('player');
                     }
+                    try { window._gameOverDisplayed = true; } catch (e) { }
                 }, 300);
+                try {
+                    if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                        window.MultiplayerSync.sendGameAction && window.MultiplayerSync.sendGameAction({ type: 'gameOver', winner: 'player' });
+                    }
+                } catch (e) { }
+                try { if (window.RoomManager && window.RoomManager.updateRoom) window.RoomManager.updateRoom({ status: 'finished', winner: 'player' }); } catch (e) { }
                 return true;
             }
             if (opponent.facedown.length === 0 && opponent.discard.length === 0 && !opponent.current) {
@@ -51,7 +124,14 @@
                     if (window.Animations && window.Animations.animateVictory) {
                         window.Animations.animateVictory('opponent');
                     }
+                    try { window._gameOverDisplayed = true; } catch (e) { }
                 }, 300);
+                try {
+                    if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                        window.MultiplayerSync.sendGameAction && window.MultiplayerSync.sendGameAction({ type: 'gameOver', winner: 'opponent' });
+                    }
+                } catch (e) { }
+                try { if (window.RoomManager && window.RoomManager.updateRoom) window.RoomManager.updateRoom({ status: 'finished', winner: 'opponent' }); } catch (e) { }
                 return true;
             }
             return false;
@@ -59,8 +139,27 @@
 
         function setTurn(turn) {
             if (turn !== 'player' && turn !== 'opponent') return;
+
+            const previousTurn = gameState.currentPlayerId;
             gameState.currentPlayerId = turn;
+
             try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', gameState.currentPlayerId); } catch (e) { }
+
+            try {
+                if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                    if (previousTurn === 'player' && turn === 'opponent') {
+                        setTimeout(() => {
+                            if (window.MultiplayerSync.sendGameStateUpdate) {
+                                window.MultiplayerSync.sendGameStateUpdate();
+                            }
+                        }, 100);
+                    } else {
+                        if (window.MultiplayerSync.updateTurnBlocker) {
+                            window.MultiplayerSync.updateTurnBlocker();
+                        }
+                    }
+                }
+            } catch (e) { }
 
             setTimeout(() => checkVictory(), 100);
 
@@ -83,13 +182,28 @@
                         try { UI.renderTurnIndicator('turnIndicator', gameState.currentPlayerId); } catch (e) { }
                         try { UI.renderFacedown(playerFacedown, player.facedown); } catch (e) { }
                         try { UI.renderFacedown(opponentFacedown, opponent.facedown); } catch (e) { }
-                        try { UI.renderDiscard(playerDiscard, player.discard); } catch (e) { }
-                        try { UI.renderDiscard(opponentDiscard, opponent.discard); } catch (e) { }
+                        try {
+                            UI.renderDiscard(playerDiscard, player.discard);
+                            playerDiscard.__cards = player.discard;
+                        } catch (e) { }
+                        try {
+                            UI.renderDiscard(opponentDiscard, opponent.discard);
+                            opponentDiscard.__cards = opponent.discard;
+                        } catch (e) { }
                         try { UI.renderCurrent(playerCurrent, player.current); } catch (e) { }
                         try { UI.renderCurrent(opponentCurrent, opponent.current); } catch (e) { }
-                        if (boardSlots && boardSlots.length) boardSlots.forEach((slotEl, idx) => UI.renderBoardSlot(slotEl, gameState.board[idx]));
-                        if (trumpPileEls && trumpPileEls.length) trumpPileEls.forEach((el, idx) => UI.renderSmallPile(el, gameState.trumpPiles[idx]));
-                        if (foundationPileEls && foundationPileEls.length) foundationPileEls.forEach((el, idx) => UI.renderSmallPile(el, gameState.foundationPiles[idx]));
+                        if (boardSlots && boardSlots.length) boardSlots.forEach((slotEl, idx) => {
+                            UI.renderBoardSlot(slotEl, gameState.board[idx]);
+                            slotEl.__cards = gameState.board[idx];
+                        });
+                        if (trumpPileEls && trumpPileEls.length) trumpPileEls.forEach((el, idx) => {
+                            UI.renderSmallPile(el, gameState.trumpPiles[idx]);
+                            el.__cards = gameState.trumpPiles[idx];
+                        });
+                        if (foundationPileEls && foundationPileEls.length) foundationPileEls.forEach((el, idx) => {
+                            UI.renderSmallPile(el, gameState.foundationPiles[idx]);
+                            el.__cards = gameState.foundationPiles[idx];
+                        });
                     } catch (e) { }
                 }, 250);
             } catch (e) { }
@@ -100,8 +214,19 @@
         try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', getCurrentTurn()); } catch (e) { }
 
         async function moveToCurrent(side, facedownEl, currentEl, discardEl) {
-            // If the bot is playing, prevent user interaction
             try { if (window.Bot && window.Bot.isPlaying && !(window.Bot._internalAction === true)) return; } catch (e) { }
+
+            try {
+                if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                    if (window.MultiplayerSync.isMyTurn && !window.MultiplayerSync.isMyTurn()) {
+                        if (window.Toast && window.Toast.show) {
+                            window.Toast.show('Wait for your turn!', 2000);
+                        }
+                        return;
+                    }
+                }
+            } catch (e) { }
+
             const owner = (side === player) ? 'player' : (side === opponent) ? 'opponent' : null;
             if (owner && getCurrentTurn() !== owner) {
                 const msg = "It's not your turn to draw.";
@@ -119,23 +244,44 @@
                     return;
                 }
 
+                try {
+                    if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled() &&
+                        window.MultiplayerSync.isMyTurn && window.MultiplayerSync.isMyTurn()) {
+                        const owner = (side === player) ? 'player' : 'opponent';
+                        if (window.MultiplayerSync.sendGameAction) {
+                            window.MultiplayerSync.sendGameAction({ type: 'shuffle_replenish', actor: owner });
+                        }
+                    }
+                } catch (e) { }
+
                 if (window.Animations && window.Animations.animateShuffleReplenish) {
                     await new Promise(resolve => {
                         window.Animations.animateShuffleReplenish(discardEl, facedownEl, () => {
                             Deck.replenishFromDiscard(side);
+                            discardEl.__cards = side.discard;
                             UI.renderFacedown(facedownEl, side.facedown);
                             UI.renderDiscard(discardEl, side.discard);
+                            try {
+                                if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                                    window.MultiplayerSync.sendGameStateUpdate && window.MultiplayerSync.sendGameStateUpdate({ midTurn: true });
+                                }
+                            } catch (e) { }
                             resolve();
                         });
                     });
                 } else {
                     Deck.replenishFromDiscard(side);
+                    discardEl.__cards = side.discard;
                     UI.renderFacedown(facedownEl, side.facedown);
                     UI.renderDiscard(discardEl, side.discard);
+                    try {
+                        if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                            window.MultiplayerSync.sendGameStateUpdate && window.MultiplayerSync.sendGameStateUpdate({ midTurn: true });
+                        }
+                    } catch (e) { }
                 }
             }
 
-            // Check victory after attempting to draw
             if (checkVictory()) {
                 return;
             }
@@ -149,7 +295,22 @@
                 side._cancelDrawAnimation = null;
                 UI.renderCurrent(currentEl, card);
                 UI.renderDiscard(discardEl, side.discard);
+                try {
+                    if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                        window.MultiplayerSync.sendGameStateUpdate && window.MultiplayerSync.sendGameStateUpdate({ midTurn: true });
+                    }
+                } catch (e) { }
             });
+
+            try {
+                if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled() &&
+                    window.MultiplayerSync.isMyTurn && window.MultiplayerSync.isMyTurn()) {
+                    const owner = (side === player) ? 'player' : 'opponent';
+                    if (window.MultiplayerSync.sendGameAction) {
+                        window.MultiplayerSync.sendGameAction({ type: 'draw', actor: owner, cardId: card && card.id });
+                    }
+                }
+            } catch (e) { }
         }
 
         playerFacedown.addEventListener('click', () => moveToCurrent(player, playerFacedown, playerCurrent, playerDiscard));
@@ -176,62 +337,89 @@
 
         trumpPileEls.forEach(el => el && el.classList && el.classList.add('no-drag'));
         foundationPileEls.forEach(el => el && el.classList && el.classList.add('no-drag'));
-        const trumpPiles = gameState.trumpPiles;
-        const foundationPiles = gameState.foundationPiles;
 
         trumpPileEls.forEach((el, idx) => {
             if (!el) return;
             el.__appendCardFor = function (owner, card) {
-                trumpPiles[idx].push(card);
-                UI.renderSmallPile(el, trumpPiles[idx]);
+                const gs = window.GameState || gameState;
+                gs.trumpPiles[idx].push(card);
+                el.__cards = gs.trumpPiles[idx];
+                UI.renderSmallPile(el, gs.trumpPiles[idx]);
             };
-            el.__cards = trumpPiles[idx];
-            UI.renderSmallPile(el, trumpPiles[idx]);
+            {
+                const gs = window.GameState || gameState;
+                el.__cards = gs.trumpPiles[idx];
+                UI.renderSmallPile(el, gs.trumpPiles[idx]);
+            }
         });
 
         foundationPileEls.forEach((el, idx) => {
             if (!el) return;
             el.__appendCardFor = function (owner, card) {
-                foundationPiles[idx].push(card);
-                UI.renderSmallPile(el, foundationPiles[idx]);
+                const gs = window.GameState || gameState;
+                gs.foundationPiles[idx].push(card);
+                el.__cards = gs.foundationPiles[idx];
+                UI.renderSmallPile(el, gs.foundationPiles[idx]);
             };
-            el.__cards = foundationPiles[idx];
-            UI.renderSmallPile(el, foundationPiles[idx]);
+            {
+                const gs = window.GameState || gameState;
+                el.__cards = gs.foundationPiles[idx];
+                UI.renderSmallPile(el, gs.foundationPiles[idx]);
+            }
         });
 
         DragDrop.init({ playerDiscardEl: playerDiscard, opponentDiscardEl: opponentDiscard, boardSlotEls: boardSlots, trumpPileEls, foundationPileEls, excusePileEl });
 
-        const board = gameState.board;
-
         function appendCardToBoard(slotIndex, owner, card) {
-            if (slotIndex == null || slotIndex < 0 || slotIndex >= board.length) return;
-            board[slotIndex].push(card);
+            const gs = window.GameState || gameState;
+            if (slotIndex == null || slotIndex < 0 || slotIndex >= gs.board.length) return;
+            gs.board[slotIndex].push(card);
             const slotEl = boardSlots[slotIndex];
             if (slotEl) {
-                UI.renderBoardSlot(slotEl, board[slotIndex]);
+                slotEl.__cards = gs.board[slotIndex];
+                UI.renderBoardSlot(slotEl, gs.board[slotIndex]);
             }
         }
 
-        if (window.Animations && window.Animations.animateBoardReveal) {
-            Animations.animateBoardReveal(boardSlots, initialBoard).then(() => {
-                initialBoard.forEach((card, idx) => {
-                    if (idx >= 0 && idx < board.length) {
-                        board[idx].push(card);
-                    }
-                });
+        if (!initialGameState) {
+            const gs = window.GameState || gameState;
+            initialBoard.forEach((card, idx) => {
+                if (idx >= 0 && idx < gs.board.length) {
+                    gs.board[idx].push(card);
+                }
+            });
+        }
+
+        const canAnimateReveal = (window.Animations && window.Animations.animateBoardReveal);
+        if (canAnimateReveal) {
+            const gsForReveal = window.GameState || gameState;
+            const boardCardsForReveal = (!initialGameState)
+                ? initialBoard
+                : gsForReveal.board.map(slot => (slot && slot.length ? slot[0] : null));
+
+            Animations.animateBoardReveal(boardSlots, boardCardsForReveal).then(() => {
+                if (window._multiplayerEnabled && window.MultiplayerSync && window.MultiplayerSync.updateTurnBlocker) {
+                    window.MultiplayerSync.updateTurnBlocker();
+                }
             });
         } else {
-            initialBoard.forEach((card, idx) => {
-                appendCardToBoard(idx, 'board', card);
+            boardSlots.forEach((slotEl, idx) => {
+                if (slotEl) {
+                    const gs = window.GameState || gameState;
+                    UI.renderBoardSlot(slotEl, gs.board[idx]);
+                }
             });
+            if (window._multiplayerEnabled && window.MultiplayerSync && window.MultiplayerSync.updateTurnBlocker) {
+                window.MultiplayerSync.updateTurnBlocker();
+            }
         }
 
         boardSlots.forEach((slotEl, idx) => {
             if (!slotEl) return;
             slotEl.__appendCardFor = function (owner, card) { appendCardToBoard(idx, owner, card); };
-            slotEl.__cards = board[idx];
+            slotEl.__cards = (window.GameState || gameState).board[idx];
             slotEl.addEventListener('mousedown', (e) => {
-                const stack = board[idx];
+                const stack = (window.GameState || gameState).board[idx];
                 if (!stack || stack.length === 0) return;
                 try {
                     const cards = slotEl.querySelectorAll && slotEl.querySelectorAll('.board-card');
@@ -244,9 +432,10 @@
                             DragDrop.onMouseDown(e, tempSide, lastCard, (fromSide) => {
                                 if (!fromSide.current) {
                                     stack.pop();
+                                    slotEl.__cards = stack;
                                 }
                                 UI.renderBoardSlot(slotEl, stack);
-                            });
+                            }, idx);
                             return;
                         }
                         if (clickedCard && clickedCard === firstCard) {
@@ -256,8 +445,9 @@
                                 for (let i = 0; i < moved; i++) {
                                     stack.pop();
                                 }
+                                slotEl.__cards = stack;
                                 UI.renderBoardSlot(slotEl, stack);
-                            });
+                            }, idx);
                             return;
                         }
                         return;
@@ -268,12 +458,13 @@
                 DragDrop.onMouseDown(e, tempSide, slotEl, (fromSide) => {
                     if (!fromSide.current) {
                         stack.pop();
+                        slotEl.__cards = stack;
                     }
                     UI.renderBoardSlot(slotEl, stack);
-                });
+                }, idx);
             });
             slotEl.addEventListener && slotEl.addEventListener('pointerdown', (e) => {
-                const stack = board[idx];
+                const stack = (window.GameState || gameState).board[idx];
                 if (!stack || stack.length === 0) return;
                 try {
                     const cards = slotEl.querySelectorAll && slotEl.querySelectorAll('.board-card');
@@ -287,9 +478,10 @@
                             DragDrop.onMouseDown(e, tempSide, lastCard, (fromSide) => {
                                 if (!fromSide.current) {
                                     stack.pop();
+                                    slotEl.__cards = stack;
                                 }
                                 UI.renderBoardSlot(slotEl, stack);
-                            });
+                            }, idx);
                             e.preventDefault && e.preventDefault();
                             return;
                         }
@@ -300,8 +492,9 @@
                                 for (let i = 0; i < moved; i++) {
                                     stack.pop();
                                 }
+                                slotEl.__cards = stack;
                                 UI.renderBoardSlot(slotEl, stack);
-                            });
+                            }, idx);
                             e.preventDefault && e.preventDefault();
                             return;
                         }
@@ -314,15 +507,16 @@
                 DragDrop.onMouseDown(e, tempSide, slotEl, (fromSide) => {
                     if (!fromSide.current) {
                         stack.pop();
+                        slotEl.__cards = stack;
                     }
                     UI.renderBoardSlot(slotEl, stack);
-                });
+                }, idx);
                 e.preventDefault && e.preventDefault();
             });
             slotEl.addEventListener && slotEl.addEventListener('touchstart', (e) => {
                 const t = (e.touches && e.touches[0]);
                 if (!t) return;
-                const stack = board[idx];
+                const stack = (window.GameState || gameState).board[idx];
                 if (!stack || stack.length === 0) return;
                 try {
                     const cards = slotEl.querySelectorAll && slotEl.querySelectorAll('.board-card');
@@ -336,9 +530,10 @@
                             DragDrop.onMouseDown(e, tempSide, lastCard, (fromSide) => {
                                 if (!fromSide.current) {
                                     stack.pop();
+                                    slotEl.__cards = stack;
                                 }
                                 UI.renderBoardSlot(slotEl, stack);
-                            });
+                            }, idx);
                             e.preventDefault && e.preventDefault();
                             return;
                         }
@@ -349,8 +544,9 @@
                                 for (let i = 0; i < moved; i++) {
                                     stack.pop();
                                 }
+                                slotEl.__cards = stack;
                                 UI.renderBoardSlot(slotEl, stack);
-                            });
+                            }, idx);
                             e.preventDefault && e.preventDefault();
                             return;
                         }
@@ -363,30 +559,32 @@
                 DragDrop.onMouseDown(e, tempSide, slotEl, (fromSide) => {
                     if (!fromSide.current) {
                         stack.pop();
+                        slotEl.__cards = stack;
                     }
                     UI.renderBoardSlot(slotEl, stack);
-                });
+                }, idx);
                 e.preventDefault && e.preventDefault();
             });
-            UI.renderBoardSlot(slotEl, board[idx]);
+            UI.renderBoardSlot(slotEl, (window.GameState || gameState).board[idx]);
         });
 
         function appendCardToPile(pileEl, owner, card) {
             if (owner === 'player') {
                 player.discard.push(card);
+                pileEl.__cards = player.discard;
                 UI.renderDiscard(pileEl, player.discard);
                 if (getCurrentTurn() === 'player') {
                     setTurn('opponent');
                 }
             } else if (owner === 'opponent') {
                 opponent.discard.push(card);
+                pileEl.__cards = opponent.discard;
                 UI.renderDiscard(pileEl, opponent.discard);
                 if (getCurrentTurn() === 'opponent') {
                     setTurn('player');
                 }
             }
-            // Check victory after discard
-            setTimeout(() => checkVictory(), 200);
+            checkVictory();
         }
 
         playerDiscard.__appendCardFor = function (owner, card) { appendCardToPile(playerDiscard, owner, card); };
@@ -401,8 +599,10 @@
             DragDrop.onMouseDown(e, tempSide, playerDiscard, (fromSide) => {
                 if (!fromSide.current) {
                     player.discard.pop();
+                    playerDiscard.__cards = player.discard;
                 }
                 UI.renderDiscard(playerDiscard, player.discard);
+                setTimeout(() => checkVictory(), 100);
             });
         });
         playerDiscard.addEventListener && playerDiscard.addEventListener('pointerdown', (e) => {
@@ -413,8 +613,10 @@
             DragDrop.onMouseDown(e, tempSide, playerDiscard, (fromSide) => {
                 if (!fromSide.current) {
                     player.discard.pop();
+                    playerDiscard.__cards = player.discard;
                 }
                 UI.renderDiscard(playerDiscard, player.discard);
+                setTimeout(() => checkVictory(), 100);
             });
         });
         playerDiscard.addEventListener && playerDiscard.addEventListener('touchstart', (e) => {
@@ -425,8 +627,10 @@
             DragDrop.onMouseDown(e, tempSide, playerDiscard, (fromSide) => {
                 if (!fromSide.current) {
                     player.discard.pop();
+                    playerDiscard.__cards = player.discard;
                 }
                 UI.renderDiscard(playerDiscard, player.discard);
+                setTimeout(() => checkVictory(), 100);
             });
         });
 
@@ -436,8 +640,10 @@
             DragDrop.onMouseDown(e, tempSide, opponentDiscard, (fromSide) => {
                 if (!fromSide.current) {
                     opponent.discard.pop();
+                    opponentDiscard.__cards = opponent.discard;
                 }
                 UI.renderDiscard(opponentDiscard, opponent.discard);
+                setTimeout(() => checkVictory(), 100);
             });
         });
         opponentDiscard.addEventListener && opponentDiscard.addEventListener('pointerdown', (e) => {
@@ -448,8 +654,10 @@
             DragDrop.onMouseDown(e, tempSide, opponentDiscard, (fromSide) => {
                 if (!fromSide.current) {
                     opponent.discard.pop();
+                    opponentDiscard.__cards = opponent.discard;
                 }
                 UI.renderDiscard(opponentDiscard, opponent.discard);
+                setTimeout(() => checkVictory(), 100);
             });
         });
         opponentDiscard.addEventListener && opponentDiscard.addEventListener('touchstart', (e) => {
@@ -460,8 +668,10 @@
             DragDrop.onMouseDown(e, tempSide, opponentDiscard, (fromSide) => {
                 if (!fromSide.current) {
                     opponent.discard.pop();
+                    opponentDiscard.__cards = opponent.discard;
                 }
                 UI.renderDiscard(opponentDiscard, opponent.discard);
+                setTimeout(() => checkVictory(), 100);
             });
         });
 
@@ -472,6 +682,7 @@
                     player._cancelDrawAnimation = null;
                 }
                 UI.renderCurrent(playerCurrent, fromSide.current);
+                setTimeout(() => checkVictory(), 100);
             });
         });
         playerCurrent.addEventListener && playerCurrent.addEventListener('pointerdown', (e) => {
@@ -483,6 +694,7 @@
                     player._cancelDrawAnimation = null;
                 }
                 UI.renderCurrent(playerCurrent, fromSide.current);
+                setTimeout(() => checkVictory(), 100);
             });
         });
         playerCurrent.addEventListener && playerCurrent.addEventListener('touchstart', (e) => {
@@ -494,6 +706,7 @@
                     player._cancelDrawAnimation = null;
                 }
                 UI.renderCurrent(playerCurrent, fromSide.current);
+                setTimeout(() => checkVictory(), 100);
             });
         });
 
@@ -504,6 +717,7 @@
                     opponent._cancelDrawAnimation = null;
                 }
                 UI.renderCurrent(opponentCurrent, fromSide.current);
+                setTimeout(() => checkVictory(), 100);
             });
         });
         opponentCurrent.addEventListener && opponentCurrent.addEventListener('pointerdown', (e) => {
@@ -515,6 +729,7 @@
                     opponent._cancelDrawAnimation = null;
                 }
                 UI.renderCurrent(opponentCurrent, fromSide.current);
+                setTimeout(() => checkVictory(), 100);
             });
         });
         opponentCurrent.addEventListener && opponentCurrent.addEventListener('touchstart', (e) => {
@@ -526,11 +741,22 @@
                     opponent._cancelDrawAnimation = null;
                 }
                 UI.renderCurrent(opponentCurrent, fromSide.current);
+                setTimeout(() => checkVictory(), 100);
             });
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => setupGame());
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isMultiplayer = urlParams.has('multiplayer');
+
+        if (isMultiplayer) {
+            window._waitingForMultiplayerInit = true;
+        } else {
+            setupGame();
+            window._gameInitialized = true;
+        }
+    });
 
     global.GameController = { setupGame };
 })(window);
