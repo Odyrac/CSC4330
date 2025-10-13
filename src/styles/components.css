@@ -1,24 +1,50 @@
 .button-container {
     display: flex;
     align-items: center;
-    padding: 8px 14px;
-    background-color: #F2F2F2;
-    color: #050505;
-    border-width: 1px;
-    border-style: solid;
-    border-color: #D2D2D2;
-    border-radius: 16px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #F2F2F2;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
     cursor: pointer;
-    transition: background-color 0.3s;
-    font-family: Signika Negative, sans-serif;
-    font-size: 22px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    font-family: 'Signika Negative', sans-serif;
+    font-size: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     -webkit-tap-highlight-color: transparent;
     margin: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.button-container::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
 }
 
 .button-container:hover {
-    background-color: rgba(224, 224, 224, 0.9);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.button-container:hover::before {
+    width: 200px;
+    height: 200px;
+}
+
+.button-container:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .button-container:focus {
@@ -27,12 +53,21 @@
 
 .button-container-small {
     margin: 6px;
+    padding: 8px 14px;
+    font-size: 14px;
 }
 
 .button-icon {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     pointer-events: none;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s ease;
+}
+
+.button-container:hover .button-icon {
+    transform: scale(1.1);
 }
 
 .button-icon-left {
@@ -40,8 +75,8 @@
 }
 
 .button-icon-small {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
 }
 
 #toast-container {
@@ -144,16 +179,17 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.5);
-    background: #2E2C39;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    background: rgba(46, 44, 57, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
     padding: 40px 50px;
     z-index: 20001;
     text-align: center;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
     opacity: 0;
     pointer-events: none;
-    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     min-width: 450px;
     max-width: 550px;
     font-family: 'Signika Negative', sans-serif;
@@ -193,7 +229,7 @@
 .multiplayer-section {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    border-radius: 18px;
     padding: 20px;
     margin-bottom: 15px;
     text-align: left;
@@ -235,9 +271,10 @@
     gap: 10px;
     background: rgba(255, 255, 255, 0.05);
     padding: 20px;
-    border-radius: 12px;
+    border-radius: 18px;
     margin: 15px 0;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .pin-digit {
@@ -272,8 +309,8 @@
     font-size: 32px;
     font-weight: bold;
     text-align: center;
-    border: 2px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
     background: rgba(255, 255, 255, 0.05);
     color: #F2F2F2;
     font-family: 'Courier New', monospace;
@@ -281,13 +318,14 @@
     transition: all 0.3s ease;
     box-sizing: border-box;
     caret-color: #F2F2F2;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .pin-digit-input:focus {
     border-color: rgba(76, 175, 80, 0.5);
     background: rgba(76, 175, 80, 0.1);
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.2);
-    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    transform: translateY(-2px);
 }
 
 .pin-digit-input:disabled {
@@ -301,21 +339,41 @@
     font-size: 16px;
     font-weight: 400;
     color: #F2F2F2;
-    background: rgba(242, 242, 242, 0.08);
-    border: 1px solid rgba(242, 242, 242, 0.15);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-family: 'Signika Negative', sans-serif;
     margin: 8px 0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.multiplayer-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
 }
 
 .multiplayer-button:hover:not(:disabled) {
-    background: rgba(242, 242, 242, 0.12);
-    border-color: rgba(242, 242, 242, 0.25);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.multiplayer-button:hover:not(:disabled)::before {
+    width: 600px;
+    height: 600px;
 }
 
 .multiplayer-button:active:not(:disabled) {
@@ -363,13 +421,14 @@
     justify-content: center;
     gap: 10px;
     padding: 12px 15px;
-    border-radius: 10px;
+    border-radius: 18px;
     margin: 15px 0;
     text-align: center;
     font-size: 14px;
     color: #F2F2F2;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .multiplayer-status-waiting {
@@ -395,13 +454,14 @@
 .connection-status {
     display: none;
     padding: 12px 15px;
-    border-radius: 10px;
+    border-radius: 18px;
     margin: 15px 0;
     text-align: center;
     font-size: 14px;
     color: #F2F2F2;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     opacity: 0;
     transform: translateY(-10px);
     transition: all 0.3s ease;
@@ -554,5 +614,170 @@
 
     .multiplayer-button .button-icon {
         font-size: 16px;
+    }
+}
+
+.victory-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 20000;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.victory-overlay.show {
+    opacity: 1;
+}
+
+.victory-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    background: rgba(46, 44, 57, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 50px 60px;
+    z-index: 20001;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    min-width: 400px;
+    font-family: 'Signika Negative', sans-serif;
+}
+
+.victory-modal.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.victory-trophy {
+    font-size: 120px;
+    margin-bottom: 20px;
+    animation: trophy-bounce 0.8s ease infinite alternate;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes trophy-bounce {
+    from {
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        transform: translateY(-20px) scale(1.1);
+    }
+}
+
+.victory-text h1 {
+    font-size: 48px;
+    font-weight: 400;
+    color: #F2F2F2;
+    margin: 0 0 15px 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    font-family: 'Signika Negative', sans-serif;
+    letter-spacing: 1px;
+}
+
+.victory-text p {
+    font-size: 18px;
+    color: rgba(242, 242, 242, 0.7);
+    margin: 0 0 30px 0;
+    font-family: 'Signika Negative', sans-serif;
+}
+
+.victory-buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.confetti-container {
+    position: fixed;
+    top: -10px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 20002;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #f0f;
+    top: -10px;
+    opacity: 0;
+    animation: confetti-fall 3s linear infinite;
+}
+
+@keyframes confetti-fall {
+    0% {
+        top: -10%;
+        opacity: 1;
+        transform: rotate(0deg);
+    }
+
+    100% {
+        top: 110%;
+        opacity: 0.3;
+        transform: rotate(720deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .victory-modal {
+        min-width: 80%;
+        padding: 30px 20px;
+        max-width: 90%;
+    }
+
+    .victory-trophy {
+        font-size: 60px;
+        margin-bottom: 15px;
+    }
+
+    .victory-text h1 {
+        font-size: 28px;
+        margin: 0 0 10px 0;
+    }
+
+    .victory-text p {
+        font-size: 14px;
+        margin: 0 0 20px 0;
+    }
+
+    .victory-buttons {
+        flex-direction: row;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .victory-modal {
+        padding: 20px 15px;
+    }
+
+    .victory-trophy {
+        font-size: 50px;
+        margin-bottom: 10px;
+    }
+
+    .victory-text h1 {
+        font-size: 22px;
+    }
+
+    .victory-text p {
+        font-size: 12px;
+        margin: 0 0 15px 0;
     }
 }
