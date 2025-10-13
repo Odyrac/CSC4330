@@ -80,16 +80,9 @@ body {
     bottom: 16px;
 }
 
-@media (max-width: 768px) {
-    .settings-card {
-        width: 280px;
-        padding: 12px 14px;
-    }
-}
-
 @media (max-width: 480px) {
     .settings-card {
-        width: 220px;
+        width: 80%;
         padding: 10px 12px;
     }
 }
