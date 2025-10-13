@@ -5,13 +5,17 @@
             const params = new URLSearchParams(qs);
             let botEnabled = false;
             let multiplayerEnabled = false;
+            let blitzEnabled = false;
             if (params.has('bot')) botEnabled = true;
             if (params.has('multiplayer')) multiplayerEnabled = true;
+            if (params.has('blitz')) blitzEnabled = true;
             window._botEnabled = botEnabled;
             window._multiplayerEnabled = multiplayerEnabled;
+            window._blitzEnabled = blitzEnabled;
         } catch (e) {
             window._botEnabled = false;
             window._multiplayerEnabled = false;
+            window._blitzEnabled = false;
         }
 
         let iAmGuest = false;
@@ -52,6 +56,10 @@
         const opponentCurrent = document.getElementById('opponentCurrent');
         const opponentDiscard = document.getElementById('opponentDiscard');
 
+        const playerClockEl = document.getElementById('playerClock');
+        const opponentClockEl = document.getElementById('opponentClock');
+        const clocksContainer = document.getElementById('clocks');
+
         let srcMe = null, srcOpp = null;
         if (initialGameState) {
             srcMe = initialGameState.players.opponent;
@@ -74,6 +82,21 @@
             initialTurn = initialGameState.currentPlayerId === 'player' ? 'opponent' : 'player';
         }
 
+        const BLITZ_DEFAULT_SECONDS = 3 * 60;
+        let initialTimeRemaining;
+        if (initialGameState && initialGameState.timeRemaining) {
+            try {
+                initialTimeRemaining = {
+                    player: initialGameState.timeRemaining.opponent,
+                    opponent: initialGameState.timeRemaining.player
+                };
+            } catch (e) {
+                initialTimeRemaining = { player: BLITZ_DEFAULT_SECONDS, opponent: BLITZ_DEFAULT_SECONDS };
+            }
+        } else {
+            initialTimeRemaining = { player: BLITZ_DEFAULT_SECONDS, opponent: BLITZ_DEFAULT_SECONDS };
+        }
+
         const gameState = {
             currentPlayerId: initialTurn,
             players: {
@@ -82,7 +105,8 @@
             },
             board: receivedBoard || [[], [], [], [], [], []],
             trumpPiles: receivedTrumpPiles || [[], []],
-            foundationPiles: receivedFoundationPiles || [[], [], [], []]
+            foundationPiles: receivedFoundationPiles || [[], [], [], []],
+            timeRemaining: initialTimeRemaining
         };
 
         try { window.GameState = gameState; } catch (e) { }
@@ -110,6 +134,7 @@
                         window.Animations.animateVictory('player');
                     }
                     try { window._gameOverDisplayed = true; } catch (e) { }
+                    try { if (window._blitzEnabled && global._gameControllerBlitzHelpers) global._gameControllerBlitzHelpers.stopTimer(); } catch (e) { }
                 }, 300);
                 try {
                     if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
@@ -125,6 +150,7 @@
                         window.Animations.animateVictory('opponent');
                     }
                     try { window._gameOverDisplayed = true; } catch (e) { }
+                    try { if (window._blitzEnabled && global._gameControllerBlitzHelpers) global._gameControllerBlitzHelpers.stopTimer(); } catch (e) { }
                 }, 300);
                 try {
                     if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
@@ -212,6 +238,116 @@
         UI.renderFacedown(playerFacedown, player.facedown);
         UI.renderFacedown(opponentFacedown, opponent.facedown);
         try { if (window.UI && window.UI.renderTurnIndicator) window.UI.renderTurnIndicator('turnIndicator', getCurrentTurn()); } catch (e) { }
+
+        let _blitzTimerId = null;
+
+        function _isTimerAuthoritative() {
+            try {
+                return !window._multiplayerEnabled || !iAmGuest;
+            } catch (e) {
+                return true;
+            }
+        }
+
+        function _formatTime(seconds) {
+            if (seconds < 0) seconds = 0;
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function _renderClocks() {
+            if (!clocksContainer || !playerClockEl || !opponentClockEl) return;
+            const pr = gameState.timeRemaining.player;
+            const or = gameState.timeRemaining.opponent;
+            playerClockEl.textContent = _formatTime(pr);
+            opponentClockEl.textContent = _formatTime(or);
+            if (pr <= 10) playerClockEl.classList.add('low'); else playerClockEl.classList.remove('low');
+            if (or <= 10) opponentClockEl.classList.add('low'); else opponentClockEl.classList.remove('low');
+        }
+
+        function _handleTimeout(loserId) {
+            try { if (window._gameOverDisplayed) return; } catch (_) { }
+            const winner = loserId === 'player' ? 'opponent' : 'player';
+            _stopBlitzTimer();
+            setTimeout(() => {
+                try { window._gameOverDisplayed = true; } catch (e) { }
+                try { if (window.Animations && window.Animations.animateVictory) window.Animations.animateVictory(winner); } catch (e) { }
+            }, 200);
+            try {
+                if (window.MultiplayerSync && window.MultiplayerSync.isEnabled && window.MultiplayerSync.isEnabled()) {
+                    window.MultiplayerSync.sendGameAction && window.MultiplayerSync.sendGameAction({ type: 'timeout', loser: loserId, winner });
+                }
+            } catch (e) { }
+            try { if (window.RoomManager && window.RoomManager.updateRoom) window.RoomManager.updateRoom({ status: 'finished', winner }); } catch (e) { }
+        }
+
+        function _tickBlitz() {
+            if (!_isTimerAuthoritative()) return;
+            if (!window._blitzEnabled) return;
+            try { if (window._gameOverDisplayed) return; } catch (_) { }
+
+            const current = gameState.currentPlayerId;
+            if (current === 'player' || current === 'opponent') {
+                gameState.timeRemaining[current]--;
+                if (gameState.timeRemaining[current] <= 0) {
+                    gameState.timeRemaining[current] = 0;
+                    _renderClocks();
+                    _handleTimeout(current);
+                    return;
+                }
+            }
+            _renderClocks();
+        }
+
+        function _startBlitzTimer() {
+            if (!window._blitzEnabled) return;
+            if (!clocksContainer || !playerClockEl || !opponentClockEl) return;
+            try { clocksContainer.style.display = 'flex'; } catch (_) { }
+            _renderClocks();
+            if (_blitzTimerId != null) return;
+            _blitzTimerId = setInterval(_tickBlitz, 1000);
+        }
+
+        function _stopBlitzTimer() {
+            if (_blitzTimerId != null) {
+                clearInterval(_blitzTimerId);
+                _blitzTimerId = null;
+            }
+        }
+
+        if (window._blitzEnabled) {
+            _startBlitzTimer();
+        }
+
+        global._gameControllerBlitzHelpers = {
+            setBlitzFromHost: function (enabled) {
+                try {
+                    window._blitzEnabled = !!enabled;
+                    if (!!enabled) {
+                        _startBlitzTimer();
+                    } else {
+                        _stopBlitzTimer();
+                        if (clocksContainer) clocksContainer.style.display = 'none';
+                    }
+                } catch (_) { }
+            },
+            renderClocksFromSync: function (payload) {
+                try {
+                    if (!payload) return;
+                    const blitz = !!payload.blitz;
+                    global._gameControllerBlitzHelpers.setBlitzFromHost(blitz);
+                    if (payload.timeRemaining && window.GameState) {
+                        window.GameState.timeRemaining = {
+                            player: payload.timeRemaining.opponent,
+                            opponent: payload.timeRemaining.player
+                        };
+                    }
+                    _renderClocks();
+                } catch (_) { }
+            },
+            stopTimer: _stopBlitzTimer
+        };
 
         async function moveToCurrent(side, facedownEl, currentEl, discardEl) {
             try { if (window.Bot && window.Bot.isPlaying && !(window.Bot._internalAction === true)) return; } catch (e) { }

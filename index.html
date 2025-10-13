@@ -19,12 +19,41 @@
 
     <h1 id="title">Chaoui</h1>
     <script>
-        createButton('Play a bot', 'bot', function () { window.location.href = 'game.html?bot'; });
+        createButton('Play a bot', 'bot', function () {
+            const blitz = document.getElementById('blitzToggle').checked;
+            let url = 'game.html?bot';
+            if (blitz) url += '&blitz';
+            window.location.href = url;
+        });
 
-        createButton('Play locally', 'local', function () { window.location.href = 'game.html'; });
+        createButton('Play locally', 'local', function () {
+            const blitz = document.getElementById('blitzToggle').checked;
+            let url = 'game.html';
+            if (blitz) url += '?blitz';
+            window.location.href = url;
+        });
 
-        createButton('Play a friend', 'multiplayer', function () { window.location.href = 'game.html?multiplayer'; });
+        createButton('Play a friend', 'multiplayer', function () {
+            const blitz = document.getElementById('blitzToggle').checked;
+            let url = 'game.html?multiplayer';
+            if (blitz) url += '&blitz';
+            window.location.href = url;
+        });
     </script>
+
+    <div class="settings-card">
+        <div class="settings-title">Settings</div>
+        <div class="setting-row">
+            <div class="setting-text">
+                <div class="setting-name">Blitz mode</div>
+                <div class="setting-desc">Play with a 3-minute clock per player.</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="blitzToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
 </body>
 
 </html>

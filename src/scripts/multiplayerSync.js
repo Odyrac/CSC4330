@@ -1,6 +1,7 @@
 (function (global) {
     let multiplayerEnabled = false;
     let syncInterval = null;
+    let clockSyncInterval = null;
     let initialStateSent = false;
     let initialStateReceived = false;
 
@@ -43,8 +44,28 @@
                     } else {
                         sendInitialGameState();
                     }
+                    if (clockSyncInterval) { clearInterval(clockSyncInterval); clockSyncInterval = null; }
+                    clockSyncInterval = setInterval(() => {
+                        try {
+                            if (!multiplayerEnabled || !WebRTCConnection.isConnected()) return;
+                            if (!RoomManager.isHost()) return;
+                            const gs = window.GameState;
+                            if (!gs || !gs.timeRemaining) return;
+                            const msg = {
+                                type: 'clockSync',
+                                data: {
+                                    timeRemaining: { player: gs.timeRemaining.player, opponent: gs.timeRemaining.opponent },
+                                    currentPlayerId: gs.currentPlayerId,
+                                    blitz: !!window._blitzEnabled
+                                },
+                                timestamp: Date.now()
+                            };
+                            WebRTCConnection.sendMessage(msg);
+                        } catch (_) { }
+                    }, 1000);
                 } else {
                     requestGameState();
+                    if (clockSyncInterval) { clearInterval(clockSyncInterval); clockSyncInterval = null; }
                 }
             }, 500);
         };
@@ -126,7 +147,9 @@
                 board: gameState.board.map(slot => Array.isArray(slot) ? slot.slice() : []),
                 trumpPiles: gameState.trumpPiles.map(pile => Array.isArray(pile) ? pile.slice() : []),
                 foundationPiles: gameState.foundationPiles.map(pile => Array.isArray(pile) ? pile.slice() : []),
-                currentPlayerId: gameState.currentPlayerId
+                currentPlayerId: gameState.currentPlayerId,
+                timeRemaining: gameState.timeRemaining ? { player: gameState.timeRemaining.player, opponent: gameState.timeRemaining.opponent } : undefined,
+                blitz: !!window._blitzEnabled
             };
 
             const stateUpdate = {
@@ -197,7 +220,9 @@
                     board: gameState.board.map(slot => Array.isArray(slot) ? slot.slice() : []),
                     trumpPiles: gameState.trumpPiles.map(pile => Array.isArray(pile) ? pile.slice() : []),
                     foundationPiles: gameState.foundationPiles.map(pile => Array.isArray(pile) ? pile.slice() : []),
-                    currentPlayerId: gameState.currentPlayerId
+                    currentPlayerId: gameState.currentPlayerId,
+                    timeRemaining: gameState.timeRemaining ? { player: gameState.timeRemaining.player, opponent: gameState.timeRemaining.opponent } : undefined,
+                    blitz: !!window._blitzEnabled
                 },
                 timestamp: Date.now()
             };
@@ -245,6 +270,10 @@
                     applyGameStateUpdate(message.data);
                     break;
 
+                case 'clockSync':
+                    applyClockSync(message.data);
+                    break;
+
                 case 'gameState':
                     applyGameState(message.data);
                     break;
@@ -289,6 +318,18 @@
                         }
                     }, 100);
 
+                    try {
+                        const blitz = (typeof data.blitz !== 'undefined') ? !!data.blitz : !!(data.timeRemaining);
+                        if (window._gameControllerBlitzHelpers && window._gameControllerBlitzHelpers.setBlitzFromHost) {
+                            window._gameControllerBlitzHelpers.setBlitzFromHost(blitz);
+                        } else {
+                            window._blitzEnabled = blitz;
+                        }
+                        if (window._gameControllerBlitzHelpers && window._gameControllerBlitzHelpers.renderClocksFromSync && data.timeRemaining) {
+                            window._gameControllerBlitzHelpers.renderClocksFromSync({ timeRemaining: data.timeRemaining, blitz });
+                        }
+                    } catch (_) { }
+
                     if (window.Toast && window.Toast.show) {
                         if (window.GameState.currentPlayerId === 'player') {
                             window.Toast.show('Game synchronized! Your turn!', 3000);
@@ -327,9 +368,58 @@
 
             gameState.currentPlayerId = data.currentPlayerId === 'player' ? 'opponent' : 'player';
 
+            if (data && data.timeRemaining) {
+                try {
+                    gameState.timeRemaining = {
+                        player: data.timeRemaining.opponent,
+                        opponent: data.timeRemaining.player
+                    };
+                    if (window._gameControllerBlitzHelpers && window._gameControllerBlitzHelpers.renderClocksFromSync) {
+                        window._gameControllerBlitzHelpers.renderClocksFromSync({ timeRemaining: data.timeRemaining, blitz: data.blitz });
+                    }
+                } catch (_) { }
+            } else if (typeof data.blitz !== 'undefined') {
+                try {
+                    if (window._gameControllerBlitzHelpers && window._gameControllerBlitzHelpers.setBlitzFromHost) {
+                        window._gameControllerBlitzHelpers.setBlitzFromHost(!!data.blitz);
+                    } else {
+                        window._blitzEnabled = !!data.blitz;
+                    }
+                } catch (_) { }
+            }
+
             refreshGameUI();
             updateTurnBlocker();
         } catch (error) { }
+    }
+
+    function applyClockSync(data) {
+        try {
+            if (!data) return;
+            const gameState = window.GameState;
+            if (!gameState) return;
+            if (typeof data.blitz !== 'undefined') {
+                try {
+                    if (window._gameControllerBlitzHelpers && window._gameControllerBlitzHelpers.setBlitzFromHost) {
+                        window._gameControllerBlitzHelpers.setBlitzFromHost(!!data.blitz);
+                    } else {
+                        window._blitzEnabled = !!data.blitz;
+                    }
+                } catch (_) { }
+            }
+            if (data.timeRemaining) {
+                gameState.timeRemaining = {
+                    player: data.timeRemaining.opponent,
+                    opponent: data.timeRemaining.player
+                };
+                if (window._gameControllerBlitzHelpers && window._gameControllerBlitzHelpers.renderClocksFromSync) {
+                    window._gameControllerBlitzHelpers.renderClocksFromSync({ timeRemaining: data.timeRemaining, blitz: data.blitz });
+                }
+            }
+            if (data.currentPlayerId) {
+                gameState.currentPlayerId = data.currentPlayerId === 'player' ? 'opponent' : 'player';
+            }
+        } catch (_) { }
     }
 
     function applyGameState(data) { }
@@ -476,6 +566,20 @@
                     } catch (e) { }
                     break;
                 }
+                case 'timeout': {
+                    try {
+                        if (window._gameOverDisplayed) break;
+                        const localWinner = action.winner === 'player' ? 'opponent' : 'player';
+                        if (window._blitzEnabled && window._gameControllerBlitzHelpers && window._gameControllerBlitzHelpers.stopTimer) {
+                            window._gameControllerBlitzHelpers.stopTimer();
+                        }
+                        if (window.Animations && window.Animations.animateVictory) {
+                            window.Animations.animateVictory(localWinner);
+                            window._gameOverDisplayed = true;
+                        }
+                    } catch (e) { }
+                    break;
+                }
                 default:
                     break;
             }
@@ -602,6 +706,10 @@
         if (syncInterval) {
             clearInterval(syncInterval);
             syncInterval = null;
+        }
+        if (clockSyncInterval) {
+            clearInterval(clockSyncInterval);
+            clockSyncInterval = null;
         }
 
         await WebRTCConnection.close();
