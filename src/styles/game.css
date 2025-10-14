@@ -460,121 +460,6 @@
     transform: rotateY(180deg);
 }
 
-.victory-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 20000;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-}
-
-.victory-overlay.show {
-    opacity: 1;
-}
-
-.victory-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.5);
-    background: #2E2C39;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 50px 60px;
-    z-index: 20001;
-    text-align: center;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
-    opacity: 0;
-    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    min-width: 400px;
-    font-family: 'Signika Negative', sans-serif;
-}
-
-.victory-modal.show {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-}
-
-.victory-trophy {
-    font-size: 120px;
-    margin-bottom: 20px;
-    animation: trophy-bounce 0.8s ease infinite alternate;
-    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
-}
-
-@keyframes trophy-bounce {
-    from {
-        transform: translateY(0) scale(1);
-    }
-
-    to {
-        transform: translateY(-20px) scale(1.1);
-    }
-}
-
-.victory-text h1 {
-    font-size: 48px;
-    font-weight: 400;
-    color: #F2F2F2;
-    margin: 0 0 15px 0;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    font-family: 'Signika Negative', sans-serif;
-    letter-spacing: 1px;
-}
-
-.victory-text p {
-    font-size: 18px;
-    color: rgba(242, 242, 242, 0.7);
-    margin: 0 0 30px 0;
-    font-family: 'Signika Negative', sans-serif;
-}
-
-.victory-buttons {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-    flex-wrap: wrap;
-}
-
-.confetti-container {
-    position: fixed;
-    top: -10px;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    pointer-events: none;
-    z-index: 20002;
-}
-
-.confetti {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background: #f0f;
-    top: -10px;
-    opacity: 0;
-    animation: confetti-fall 3s linear infinite;
-}
-
-@keyframes confetti-fall {
-    0% {
-        top: -10%;
-        opacity: 1;
-        transform: rotate(0deg);
-    }
-
-    100% {
-        top: 110%;
-        opacity: 0.3;
-        transform: rotate(720deg);
-    }
-}
-
 .shuffle-animation-container {
     position: fixed;
     top: 0;
@@ -603,54 +488,67 @@
 }
 
 @media (max-width: 768px) {
-    .victory-modal {
-        min-width: 80%;
-        padding: 30px 20px;
-        max-width: 90%;
+    #turnIndicator {
+        bottom: 6px;
+    }
+}
+
+#clocks {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 2000;
+}
+
+.clock {
+    min-width: 110px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #F2F2F2;
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-size: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.clock.player {
+    border: 2px solid rgba(79, 195, 247, 0.18);
+}
+
+.clock.opponent {
+    border: 2px solid rgba(237, 201, 22, 0.18);
+}
+
+.clock.low {
+    background: rgba(128, 20, 20, 0.55);
+}
+
+@media (max-width: 768px) {
+    #clocks {
+        right: 8px;
+        top: 68px;
+        bottom: auto;
     }
 
-    .victory-trophy {
-        font-size: 60px;
-        margin-bottom: 15px;
-    }
-
-    .victory-text h1 {
-        font-size: 28px;
-        margin: 0 0 10px 0;
-    }
-
-    .victory-text p {
+    .clock {
         font-size: 14px;
-        margin: 0 0 20px 0;
-    }
-
-    .victory-buttons {
-        flex-direction: row;
-        gap: 8px;
-        flex-wrap: wrap;
+        padding: 6px 8px;
+        min-width: 85px;
     }
 }
 
 @media (max-width: 480px) {
-    .victory-modal {
-        padding: 20px 15px;
+    #clocks {
+        right: 4px;
+        top: 68px;
     }
 
-    .victory-trophy {
-        font-size: 50px;
-        margin-bottom: 10px;
-    }
-
-    .victory-text h1 {
-        font-size: 22px;
-    }
-
-    .victory-text p {
-        font-size: 12px;
-        margin: 0 0 15px 0;
-    }
-
-    #turnIndicator {
-        bottom: 6px;
+    .clock {
+        font-size: 13px;
+        min-width: 75px;
+        padding: 5px 7px;
     }
 }

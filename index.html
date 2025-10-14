@@ -17,14 +17,51 @@
 <body>
     <img src="src/assets/banner.png" alt="Banner" id="banner">
 
-    <h1 id="title">Chaoui</h1>
+    <svg id="title" viewBox="0 0 1200 160" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"
+        role="img" aria-label="Title">
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="rgba(255,255,255,0.05)"
+            stroke="rgba(255,255,255,0.10)" stroke-width="2" paint-order="stroke fill"
+            vector-effect="non-scaling-stroke">
+            Chaoui
+        </text>
+    </svg>
+
     <script>
-        createButton('Play a bot', 'bot', function () { window.location.href = 'game.html?bot'; });
+        createButton('Play a bot', 'bot', function () {
+            const blitz = document.getElementById('blitzToggle').checked;
+            let url = 'game.html?bot';
+            if (blitz) url += '&blitz';
+            window.location.href = url;
+        });
 
-        createButton('Play locally', 'local', function () { window.location.href = 'game.html'; });
+        createButton('Play locally', 'local', function () {
+            const blitz = document.getElementById('blitzToggle').checked;
+            let url = 'game.html';
+            if (blitz) url += '?blitz';
+            window.location.href = url;
+        });
 
-        createButton('Play a friend', 'multiplayer', function () { window.location.href = 'game.html?multiplayer'; });
+        createButton('Play a friend', 'multiplayer', function () {
+            const blitz = document.getElementById('blitzToggle').checked;
+            let url = 'game.html?multiplayer';
+            if (blitz) url += '&blitz';
+            window.location.href = url;
+        });
     </script>
+
+    <div class="settings-card">
+        <div class="settings-title">Settings</div>
+        <div class="setting-row">
+            <div class="setting-text">
+                <div class="setting-name">Blitz mode</div>
+                <div class="setting-desc">Play with a 3-minute clock per player.</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="blitzToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
 </body>
 
 </html>

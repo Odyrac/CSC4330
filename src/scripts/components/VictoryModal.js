@@ -43,8 +43,19 @@
         document.body.appendChild(confettiContainer);
         document.body.appendChild(modal);
 
+        setupOverlayClickHandler();
         setupButtons();
         return modal;
+    }
+
+    function setupOverlayClickHandler() {
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    window.location.href = 'index.html';
+                }
+            });
+        }
     }
 
     function setupButtons() {
