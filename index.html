@@ -17,7 +17,15 @@
 <body>
     <img src="src/assets/banner.png" alt="Banner" id="banner">
 
-    <h1 id="title">Chaoui</h1>
+    <svg id="title" viewBox="0 0 1200 160" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"
+        role="img" aria-label="Title">
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="rgba(255,255,255,0.05)"
+            stroke="rgba(255,255,255,0.10)" stroke-width="2" paint-order="stroke fill"
+            vector-effect="non-scaling-stroke">
+            Chaoui
+        </text>
+    </svg>
+
     <script>
         createButton('Play a bot', 'bot', function () {
             const blitz = document.getElementById('blitzToggle').checked;
