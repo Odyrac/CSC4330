@@ -31,7 +31,8 @@ body {
 }
 
 #title {
-    color: #585858;
+    color: rgba(255, 255, 255, 0.05);
+    -webkit-text-stroke: 0.1px rgba(255, 255, 255, 0.1);
     margin-top: -10px;
     margin-bottom: 32px;
     font-family: 'Paytone One', sans-serif;
