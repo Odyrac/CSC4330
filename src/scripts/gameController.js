@@ -82,7 +82,7 @@
             initialTurn = initialGameState.currentPlayerId === 'player' ? 'opponent' : 'player';
         }
 
-        const BLITZ_DEFAULT_SECONDS = 3 * 60;
+        const BLITZ_DEFAULT_SECONDS = 4 * 60;
         let initialTimeRemaining;
         if (initialGameState && initialGameState.timeRemaining) {
             try {

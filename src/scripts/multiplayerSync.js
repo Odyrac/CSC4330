@@ -4,10 +4,14 @@
     let clockSyncInterval = null;
     let initialStateSent = false;
     let initialStateReceived = false;
+    let lastStateUpdateTimestamp = 0;
+    let processingStateUpdate = false;
 
     function init() {
         initialStateSent = false;
         initialStateReceived = false;
+        lastStateUpdateTimestamp = 0;
+        processingStateUpdate = false;
 
         const existingOnConnected = WebRTCConnection.onConnected;
         const existingOnDisconnected = WebRTCConnection.onDisconnected;
@@ -55,7 +59,6 @@
                                 type: 'clockSync',
                                 data: {
                                     timeRemaining: { player: gs.timeRemaining.player, opponent: gs.timeRemaining.opponent },
-                                    currentPlayerId: gs.currentPlayerId,
                                     blitz: !!window._blitzEnabled
                                 },
                                 timestamp: Date.now()
@@ -349,8 +352,19 @@
 
     function applyGameStateUpdate(data) {
         try {
+            if (data.timestamp && data.timestamp < lastStateUpdateTimestamp) {
+                return;
+            }
+
+            if (processingStateUpdate) {
+                return;
+            }
+
+            processingStateUpdate = true;
+
             const gameState = window.GameState;
             if (!gameState) {
+                processingStateUpdate = false;
                 return;
             }
 
@@ -390,7 +404,14 @@
 
             refreshGameUI();
             updateTurnBlocker();
-        } catch (error) { }
+
+            if (data.timestamp) {
+                lastStateUpdateTimestamp = data.timestamp;
+            }
+            processingStateUpdate = false;
+        } catch (error) {
+            processingStateUpdate = false;
+        }
     }
 
     function applyClockSync(data) {
@@ -415,9 +436,6 @@
                 if (window._gameControllerBlitzHelpers && window._gameControllerBlitzHelpers.renderClocksFromSync) {
                     window._gameControllerBlitzHelpers.renderClocksFromSync({ timeRemaining: data.timeRemaining, blitz: data.blitz });
                 }
-            }
-            if (data.currentPlayerId) {
-                gameState.currentPlayerId = data.currentPlayerId === 'player' ? 'opponent' : 'player';
             }
         } catch (_) { }
     }
@@ -702,6 +720,8 @@
     async function cleanup() {
         multiplayerEnabled = false;
         hideTurnBlocker();
+        lastStateUpdateTimestamp = 0;
+        processingStateUpdate = false;
 
         if (syncInterval) {
             clearInterval(syncInterval);
