@@ -40,6 +40,12 @@ body {
     font-size: 96px;
 }
 
+@media (max-width: 480px) {
+    #title text {
+        font-size: 128px;
+    }
+}
+
 #banner {
     width: 360px;
     pointer-events: none;
