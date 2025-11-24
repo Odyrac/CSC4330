@@ -11,12 +11,26 @@
     <link rel="stylesheet" href="src/styles/components.css">
     <link rel="stylesheet" href="src/styles/game.css">
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
     <script src="src/scripts/components/Button.js"></script>
+    <script src="src/scripts/components/Toast.js"></script>
+    <script src="src/scripts/components/MultiplayerModal.js"></script>
+    <script src="src/scripts/components/VictoryModal.js"></script>
     <script src="src/scripts/url.js"></script>
     <script src="src/scripts/deck.js"></script>
     <script src="src/scripts/ui.js"></script>
+    <script src="src/scripts/animations.js"></script>
+    <script src="src/scripts/rules.js"></script>
     <script src="src/scripts/dragdrop.js"></script>
+    <script src="src/scripts/bot.js"></script>
+    <script src="src/scripts/firebaseConfig.js"></script>
+    <script src="src/scripts/roomManager.js"></script>
+    <script src="src/scripts/webrtcConnection.js"></script>
+    <script src="src/scripts/multiplayerSync.js"></script>
     <script src="src/scripts/gameController.js"></script>
+    <script src="src/scripts/gameMultiplayerBootstrap.js"></script>
 </head>
 
 <body>
@@ -41,16 +55,51 @@
         <div class="board-slot" id="boardSlot5"></div>
     </div>
 
-    <div id="trumpPiles" class="pile-vertical">
+    <div id="leftPiles" class="pile-vertical">
         <div class="small-pile trump" id="trumpPile0"></div>
         <div class="small-pile trump" id="trumpPile1"></div>
+
+        <div class="small-pile excuse" id="excusePile"><img src="src/assets/icons/excuse.png" alt="Excuse icon"></div>
     </div>
 
-    <div id="foundationPiles" class="pile-vertical">
+    <div id="rightPiles" class="pile-vertical">
         <div class="small-pile foundation" id="foundationPile0"></div>
         <div class="small-pile foundation" id="foundationPile1"></div>
         <div class="small-pile foundation" id="foundationPile2"></div>
         <div class="small-pile foundation" id="foundationPile3"></div>
+    </div>
+
+    <div id="settings">
+        <script>
+            const settingsDiv = document.getElementById('settings');
+            createButton('', 'home', function () { window.location.href = 'index.html'; }, settingsDiv, 'small');
+
+            let fullScreenButton;
+            function updateFullScreenButton() {
+                const isFullScreen = document.fullscreenElement;
+                if (fullScreenButton) {
+                    fullScreenButton.remove();
+                }
+                fullScreenButton = createButton('', isFullScreen ? 'minimize' : 'maximize', function () {
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    } else {
+                        document.documentElement.requestFullscreen();
+                    }
+                }, settingsDiv, 'small');
+            }
+
+            updateFullScreenButton();
+
+            document.addEventListener('fullscreenchange', updateFullScreenButton);
+        </script>
+    </div>
+
+    <div id="turnIndicator">Loading...</div>
+
+    <div id="clocks" style="display:none;">
+        <div id="opponentClock" class="clock opponent">--:--</div>
+        <div id="playerClock" class="clock player">--:--</div>
     </div>
 </body>
 

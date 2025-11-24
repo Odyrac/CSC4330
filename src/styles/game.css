@@ -1,14 +1,48 @@
+:root {
+    --card-width: 100px;
+    --card-height: 140px;
+    --small-card-width: 72px;
+    --small-card-height: 100px;
+    --gap-horizontal: 20px;
+    --gap-vertical: 12px;
+    --board-offset-y: 40px;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --card-width: 66px;
+        --card-height: 92px;
+        --small-card-width: 48px;
+        --small-card-height: 67px;
+        --gap-horizontal: 8px;
+        --gap-vertical: 6px;
+        --board-offset-y: 26px;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --card-width: 52px;
+        --card-height: 73px;
+        --small-card-width: 38px;
+        --small-card-height: 53px;
+        --gap-horizontal: 6px;
+        --gap-vertical: 5px;
+        --board-offset-y: 22px;
+    }
+}
+
 .pile-horizontal {
     display: flex;
     flex-direction: row;
     position: absolute;
-    gap: 20px;
+    gap: var(--gap-horizontal);
 }
 
 .pile {
     position: relative;
-    width: 100px;
-    height: 140px;
+    width: var(--card-width);
+    height: var(--card-height);
 }
 
 .discard {
@@ -33,6 +67,50 @@
     top: 40px;
 }
 
+@media (max-width: 768px) {
+    #playerPiles {
+        bottom: 6vh;
+        bottom: 6dvh;
+    }
+
+    #playerPiles .current {
+        bottom: 3vh;
+        bottom: 3dvh;
+    }
+
+    #opponentPiles {
+        top: 2vh;
+        top: 2dvh;
+    }
+
+    #opponentPiles .current {
+        top: 2vh;
+        top: 2dvh;
+    }
+}
+
+@media (max-width: 480px) {
+    #playerPiles {
+        bottom: 6vh;
+        bottom: 6dvh;
+    }
+
+    #playerPiles .current {
+        bottom: 2vh;
+        bottom: 2dvh;
+    }
+
+    #opponentPiles {
+        top: 2vh;
+        top: 2dvh;
+    }
+
+    #opponentPiles .current {
+        top: 2vh;
+        top: 2dvh;
+    }
+}
+
 .pile img {
     width: 100%;
     height: 100%;
@@ -52,8 +130,8 @@
 }
 
 .dragging-image {
-    width: 100px;
-    height: 140px;
+    width: var(--card-width);
+    height: var(--card-height);
     opacity: 0.95;
     transform: rotate(0deg);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
@@ -61,24 +139,48 @@
 }
 
 .drop-highlight {
-    outline: 3px dashed #edc916;
+    outline: 3px dashed #c1b8f0;
     outline-offset: 4px;
     border-radius: 6px;
 }
 
+@media (max-width: 768px) {
+    .drop-highlight {
+        outline-width: 2px;
+        outline-offset: 3px;
+        border-radius: 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .drop-highlight {
+        outline-width: 2px;
+        outline-offset: 2px;
+        border-radius: 3px;
+    }
+}
+
 .board-row {
     display: flex;
-    gap: 20px;
+    gap: var(--gap-horizontal);
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    position: absolute;
+    left: 50%;
+    top: 40%;
+    transform: translate(-50%, -50%);
 }
 
 .board-slot {
-    width: 100px;
-    height: 140px;
+    width: var(--card-width);
+    height: var(--card-height);
     background: rgba(255, 255, 255, 0.02);
     border-radius: 6px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     position: relative;
     overflow: visible;
+    flex-shrink: 0;
 }
 
 .board-slot .board-card {
@@ -98,31 +200,99 @@
     pointer-events: none;
 }
 
-.board-slot.drop-highlight,
-.board-slot .drop-highlight {
-    outline-color: #4fc3f7;
-}
-
 .pile-vertical {
     position: absolute;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--gap-vertical);
     top: 50%;
     transform: translateY(-50%);
 }
 
-#trumpPiles {
+#leftPiles {
     left: 20px;
 }
 
-#foundationPiles {
+#rightPiles {
     right: 20px;
 }
 
+@media (max-width: 768px) {
+    .pile-vertical {
+        top: auto;
+        bottom: 3vh;
+        bottom: 3dvh;
+        transform: none;
+    }
+
+    #leftPiles {
+        left: 8px;
+    }
+
+    #rightPiles {
+        right: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pile-vertical {
+        bottom: 2.5vh;
+        bottom: 2.5dvh;
+    }
+
+    #leftPiles {
+        left: 4px;
+    }
+
+    #rightPiles {
+        right: 4px;
+    }
+}
+
+.foundation.drop-highlight {
+    outline-color: #4fc3f7;
+    outline-width: 2px;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.trump.drop-highlight {
+    outline-color: #edc916;
+    outline-width: 2px;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.excuse.drop-highlight {
+    outline-color: #ff69b4;
+    outline-width: 2px;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .foundation.drop-highlight,
+    .trump.drop-highlight,
+    .excuse.drop-highlight {
+        outline-width: 1.5px;
+        outline-offset: 2px;
+        border-radius: 3px;
+    }
+}
+
+@media (max-width: 480px) {
+    .foundation.drop-highlight,
+    .trump.drop-highlight,
+    .excuse.drop-highlight {
+        outline-width: 1.5px;
+        outline-offset: 1.5px;
+        border-radius: 2px;
+    }
+}
+
 .small-pile {
-    width: 72px;
-    height: 100px;
+    width: var(--small-card-width);
+    height: var(--small-card-height);
     background: rgba(255, 255, 255, 0.02);
     border-radius: 6px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
@@ -146,4 +316,239 @@
 
 .small-pile.no-drag {
     pointer-events: none;
+}
+
+.small-pile.excuse {
+    border: 2px solid rgba(255, 105, 180, 0.15);
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .small-pile.excuse {
+        margin-top: 16px;
+    }
+}
+
+.small-pile.excuse img {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+#settings {
+    position: fixed;
+    left: 12px;
+    top: 12px;
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    pointer-events: none;
+}
+
+#settings>* {
+    pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+    #settings {
+        left: 0;
+        right: 0;
+        top: 0;
+        width: 100%;
+        justify-content: space-between;
+        padding: 12px;
+        box-sizing: border-box;
+        pointer-events: none;
+    }
+
+    #settings>* {
+        pointer-events: auto;
+    }
+}
+
+#turnIndicator {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #F2F2F2;
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-size: 14px;
+    z-index: 2000;
+}
+
+@media (max-width: 768px) {
+    #turnIndicator {
+        left: 50%;
+        bottom: 1.5vh;
+        bottom: 1.5dvh;
+        transform: translateX(-50%);
+    }
+}
+
+.card-drawing {
+    position: fixed;
+    width: var(--card-width);
+    height: var(--card-height);
+    pointer-events: none;
+    z-index: 10000;
+    transform-style: preserve-3d;
+}
+
+.card-drawing img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    backface-visibility: hidden;
+}
+
+.card-drawing .card-back {
+    transform: rotateY(0deg);
+}
+
+.card-drawing .card-front {
+    transform: rotateY(180deg);
+}
+
+.card-drawing.animating {
+    transition: left 0.5s ease-out 0.4s, top 0.5s ease-out 0.4s, transform 0.4s ease-in-out;
+}
+
+.board-card-reveal {
+    transform-style: preserve-3d;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.board-card-reveal.flipping {
+    animation: card-flip 0.3s ease-in-out forwards;
+}
+
+@keyframes card-flip {
+    0% {
+        transform: rotateY(0deg);
+    }
+
+    100% {
+        transform: rotateY(180deg);
+    }
+}
+
+.board-card-reveal .card-face {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    backface-visibility: hidden;
+    object-fit: cover;
+}
+
+.board-card-reveal .card-back-face {
+    transform: rotateY(0deg);
+}
+
+.board-card-reveal .card-front-face {
+    transform: rotateY(180deg);
+}
+
+.shuffle-animation-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10000;
+}
+
+.shuffle-card {
+    position: absolute;
+    width: 60px;
+    height: 90px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transform-origin: center;
+}
+
+.shuffle-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    #turnIndicator {
+        bottom: 6px;
+    }
+}
+
+#clocks {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 2000;
+}
+
+.clock {
+    min-width: 110px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #F2F2F2;
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-size: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.clock.player {
+    border: 2px solid rgba(79, 195, 247, 0.18);
+}
+
+.clock.opponent {
+    border: 2px solid rgba(237, 201, 22, 0.18);
+}
+
+.clock.low {
+    background: rgba(128, 20, 20, 0.55);
+}
+
+@media (max-width: 768px) {
+    #clocks {
+        right: 8px;
+        top: 68px;
+        bottom: auto;
+    }
+
+    .clock {
+        font-size: 14px;
+        padding: 6px 8px;
+        min-width: 85px;
+    }
+}
+
+@media (max-width: 480px) {
+    #clocks {
+        right: 4px;
+        top: 68px;
+    }
+
+    .clock {
+        font-size: 13px;
+        min-width: 75px;
+        padding: 5px 7px;
+    }
 }

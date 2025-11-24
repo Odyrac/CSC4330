@@ -1,10 +1,16 @@
 (function (global) {
+<<<<<<< HEAD
     /*
     constant variables to particulate cards of diferent suits and value (tarot cards by value)
     */
     const suits = ['heart', 'diamond', 'club', 'spade']; //suits define the shape associated with a card 
     const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K', 'A']; //ranks define hierarchy of card (each rank apears in each suit)
     const trumps = Array.from({ length: 21 }, (_, i) => i + 1); //numeric card that counts 1 to 21 inclusive
+=======
+    const suits = ['heart', 'diamond', 'club', 'spade'];
+    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K'];
+    const trumps = Array.from({ length: 21 }, (_, i) => i + 1);
+>>>>>>> origin/main
 
     /**
      * This function defines the four suits and the associated values, as well as tarot cards (Suit cards = 56, Trumps = 21, Fool??)
@@ -31,11 +37,23 @@
             //function stores the id, suit, rank, color, and type of a card
             deck.push({
                 id: `t${rank}`,
-                suit: 'trump',
+                suit: undefined,
                 rank: rank,
+<<<<<<< HEAD
                 color: 'trump', //no color
                 type: 'trump' //differentiates from normal cards
+=======
+                color: undefined,
+                type: 'trump'
+>>>>>>> origin/main
             });
+        });
+        deck.push({
+            id: 'excuse',
+            suit: undefined,
+            rank: undefined,
+            color: undefined,
+            type: undefined
         });
         return deck;
     }
@@ -65,14 +83,27 @@
     function replenishFromDiscard(side) {
         if (!side) return;
         if (Array.isArray(side.facedown) && side.facedown.length > 0) return;
-        if (!Array.isArray(side.discard) || side.discard.length <= 1) return;
+        if (!Array.isArray(side.discard) || side.discard.length === 0) return;
+
+        if (side.discard.length === 1) {
+            const lastCard = side.discard.pop();
+            if (!Array.isArray(side.facedown)) side.facedown = [];
+            side.facedown.length = 0;
+            side.facedown.push(lastCard);
+            if (!Array.isArray(side.discard)) side.discard = [];
+            side.discard.length = 0;
+            return;
+        }
 
         const lastCard = side.discard.pop();
+        const shuffled = shuffleDeck(side.discard.slice());
+        if (!Array.isArray(side.facedown)) side.facedown = [];
+        side.facedown.length = 0;
+        for (let i = 0; i < shuffled.length; i++) side.facedown.push(shuffled[i]);
 
-        const newFacedown = shuffleDeck(side.discard.slice());
-        side.facedown = newFacedown.slice();
-
-        side.discard = [lastCard];
+        if (!Array.isArray(side.discard)) side.discard = [];
+        side.discard.length = 0;
+        side.discard.push(lastCard);
     }
 
     /**
