@@ -1,16 +1,8 @@
 (function (global) {
-<<<<<<< HEAD
-    /*
-    constant variables to particulate cards of diferent suits and value (tarot cards by value)
-    */
-    const suits = ['heart', 'diamond', 'club', 'spade']; //suits define the shape associated with a card 
-    const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K', 'A']; //ranks define hierarchy of card (each rank apears in each suit)
-    const trumps = Array.from({ length: 21 }, (_, i) => i + 1); //numeric card that counts 1 to 21 inclusive
-=======
+
     const suits = ['heart', 'diamond', 'club', 'spade'];
     const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'C', 'Q', 'K'];
     const trumps = Array.from({ length: 21 }, (_, i) => i + 1);
->>>>>>> origin/main
 
     /**
      * This function defines the four suits and the associated values, as well as tarot cards (Suit cards = 56, Trumps = 21, Fool??)
@@ -39,13 +31,8 @@
                 id: `t${rank}`,
                 suit: undefined,
                 rank: rank,
-<<<<<<< HEAD
-                color: 'trump', //no color
-                type: 'trump' //differentiates from normal cards
-=======
                 color: undefined,
                 type: 'trump'
->>>>>>> origin/main
             });
         });
         deck.push({
