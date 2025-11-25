@@ -1,23 +1,34 @@
 (function (global) {
+    /**
+     * Animates drawing a card from one element to another with a flip effect.
+     * 
+     * @param {HTMLElement} fromEl - The element to draw the card from.
+     * @param {HTMLElement} toEl - The element to draw the card to.
+     * @param {Object} card - The card object containing at least an 'id' property.
+     * @param {Function} onComplete - Callback function to execute after animation completes.
+     * @returns {Function} cleanup function to cancel the animation if needed.
+     */
     function animateCardDraw(fromEl, toEl, card, onComplete) {
         const fromRect = fromEl.getBoundingClientRect();
         const toRect = toEl.getBoundingClientRect();
 
+        // Create animation card element and set initial styles
         const animCard = document.createElement('div');
         animCard.className = 'card-drawing';
         animCard.style.left = fromRect.left + 'px';
         animCard.style.top = fromRect.top + 'px';
 
+        // Create back and front images for the card
         const backImg = document.createElement('img');
         backImg.src = 'src/assets/cards/faceDown.png';
         backImg.className = 'card-back';
         backImg.alt = 'Card back';
-
         const frontImg = document.createElement('img');
         frontImg.src = `src/assets/cards/${card.id}.png`;
         frontImg.className = 'card-front';
         frontImg.alt = card.id || 'Card';
 
+        // Append images to animation card and add to document
         animCard.appendChild(backImg);
         animCard.appendChild(frontImg);
         document.body.appendChild(animCard);
@@ -25,7 +36,9 @@
         let timeoutId = null;
         let cancelled = false;
 
+        // Start the animation on the next animation frame
         requestAnimationFrame(() => {
+            // Trigger reflow for transition
             requestAnimationFrame(() => {
                 if (cancelled) return;
                 animCard.classList.add('animating');
@@ -42,6 +55,7 @@
             });
         });
 
+        // Return cleanup function to cancel the animation
         return function cleanup() {
             cancelled = true;
             if (timeoutId) clearTimeout(timeoutId);
@@ -51,9 +65,21 @@
         };
     }
 
+    /**
+     * Animates a bot moving cards from one element to another.
+     * 
+     * @param {HTMLElement} fromEl - The element to move cards from.
+     * @param {HTMLElement} toEl - The element to move cards to.
+     * @param {Array} cards - Array of card objects being moved.
+     * @param {string} destType - Type of destination ('hand', 'board', etc.).
+     * @param {string} sourceType - Type of source ('hand', 'board', etc.).
+     * @param {number|Object} animationDelay - Duration in ms or options object for animation.
+     * @return {Promise} Resolves when the animation is complete.
+     */
     async function animateBotMove(fromEl, toEl, cards, destType, sourceType, animationDelay) {
         if (!fromEl || !toEl || !cards || !cards.length) return;
 
+        // Prevent overlapping animations
         try {
             const clone = window.DragDrop && window.DragDrop.createCloneFromCards
                 ? window.DragDrop.createCloneFromCards(cards)
@@ -70,7 +96,7 @@
 
             let startX = fromRect.left + fromRect.width / 2;
             let startY = fromRect.top + fromRect.height / 2;
-
+            
             if (sourceType === 'board') {
                 const existingCards = fromEl.querySelectorAll && fromEl.querySelectorAll('.board-card');
                 if (existingCards && existingCards.length > 0) {
@@ -135,7 +161,11 @@
 
         } catch (e) { }
     }
-
+    /**
+     * Animates the victory sequence for the winning player.
+     * 
+     * @param {Object} winner - The player object who won.
+     */
     function animateVictory(winner) {
         if (global.VictoryModal) {
             global.VictoryModal.open(winner);
@@ -143,6 +173,12 @@
         }
     }
 
+    /**
+     * Animates revealing the initial board cards with a flip effect.
+     * 
+     * @param {Array<HTMLElement>} boardSlots - Array of board slot elements.
+     * @param {Array<Object>} initialBoard - Array of card objects for the initial board.
+     */
     async function animateBoardReveal(boardSlots, initialBoard) {
         if (!boardSlots || boardSlots.length === 0) return;
 
@@ -220,6 +256,14 @@
         }
     }
 
+    /**
+     * Animates the shuffle and replenish action from discard pile to deck.
+     * 
+     * @param {HTMLElement} discardEl - The discard pile element.
+     * @param {HTMLElement} facedownEl - The facedown deck element.
+     * @param {Function} onComplete - Callback function to execute after animation completes.
+     * @return {Promise} Resolves when the animation is complete.
+     */
     async function animateShuffleReplenish(discardEl, facedownEl, onComplete) {
         if (!discardEl || !facedownEl) {
             if (onComplete) onComplete();
@@ -328,7 +372,8 @@
 
         try { window._shuffleAnimationInProgress = false; } catch (e) { }
     }
-
+    
+    // Expose functions to global scope
     global.Animations = {
         animateCardDraw,
         animateBotMove,
