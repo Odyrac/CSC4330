@@ -15,18 +15,37 @@
 
     const ROOM_TTL_MS = 3 * 60 * 60 * 1000;
 
+    /**
+     * Computes the expiration timestamp for a room.
+     * 
+     * @returns {Date} The expiration timestamp.
+     */
     function _computeExpireAt() {
         return new Date(Date.now() + ROOM_TTL_MS);
     }
 
+    /**
+     * Initializes the RoomManager with the given database instance.
+     * 
+     * @param {Object} database - The database instance (e.g., Firestore).
+     */
     function init(database) {
         db = database;
     }
 
+    /**
+     * Generates a random 4-digit room PIN.
+     * 
+     * @returns {string} The generated room PIN.
+     */
     function generateRoomPin() {
         return Math.floor(1000 + Math.random() * 9000).toString();
     }
-
+    /**
+     * Creates a new room and returns its PIN and role.
+     * 
+     * @returns {Object} An object containing success status, room PIN, and role.
+     */
     async function createRoom() {
         if (frozen) {
             return { success: false, error: 'RoomManager frozen' };
@@ -62,6 +81,13 @@
         }
     }
 
+    /**
+     * Joins an existing room with the given PIN.
+     * 
+     * @param {string} pin - The room PIN to join.
+     * @param {boolean} asHost - Whether to join as host.
+     * @returns {Object} An object containing success status, room PIN, role, reconnection status, and game state.
+     */
     async function joinRoom(pin, asHost = false) {
         if (frozen) {
             return { success: false, error: 'RoomManager frozen' };
@@ -122,10 +148,22 @@
         }
     }
 
+    /**
+     * Rejoins the room as host using the given PIN.
+     * 
+     * @param {string} pin - The room PIN to rejoin.
+     * @returns {Object} An object containing success status, room PIN, role, reconnection status, and game state.
+     */
     async function rejoinAsHost(pin) {
         return await joinRoom(pin, true);
     }
 
+    /**
+     * Listens to updates in the room with the given PIN.
+     * 
+     * @param {string} pin - The room PIN to listen to.
+     * @returns {void} - No return value.
+     */
     function listenToRoom(pin) {
         if (frozen) {
             return;
@@ -168,6 +206,12 @@
         });
     }
 
+    /**
+     * Updates the current room with the given data.
+     * 
+     * @param {Object} data - The data to update in the room.
+     * @returns {Object} An object containing success status and optional error message.
+     */
     async function updateRoom(data) {
         if (frozen) {
             return { success: true };
@@ -220,6 +264,12 @@
         }
     }
 
+    /**
+     * Sets the current peer ID for the user in the room.
+     * 
+     * @param {string} peerId - The peer ID to set.
+     * @returns {Object} An object containing success status and optional error message.
+     */
     async function setMyPeerId(peerId) {
         if (frozen) {
             return { success: true };
@@ -259,6 +309,12 @@
         }
     }
 
+    /**
+     * Leaves the current room, optionally deleting it if the user is the host.
+     * 
+     * @param {boolean} deleteRoom - Whether to delete the room if the user is the host.
+     * @returns {Object} An object containing success status and optional error message.
+     */
     async function leaveRoom(deleteRoom = false) {
         if (frozen) {
             currentRoom = null;
@@ -298,7 +354,12 @@
             return { success: false, error: error.message };
         }
     }
-
+    /**
+     * Sends a signaling message to the other peer in the current room.
+     * 
+     * @param {Object} signal - The signaling message to send.
+     * @returns {Object} An object containing success status and optional error message.
+     */
     async function sendSignal(signal) {
         if (frozen) {
             return { success: true };
@@ -331,6 +392,12 @@
         }
     }
 
+    /**
+     * Listens to signaling messages directed to the current peer in the room.
+     * 
+     * @param {Function} callback - The callback function to handle incoming signals.
+     * @returns {Function|null} A function to unsubscribe from the listener, or null if not listening.
+     */
     function listenToSignals(callback) {
         if (frozen) {
             return null;
@@ -361,26 +428,54 @@
         return unsub;
     }
 
+    /***
+     * Gets the current room data.
+     * 
+     * @returns {Object|null} The current room data, or null if not in a room.
+     */
     function getCurrentRoom() {
         return currentRoom;
     }
-
+    /***
+     * Gets the current room ID.
+     * 
+     * @returns {string|null} The current room ID, or null if not in a room.
+     */
     function getCurrentRoomId() {
         return currentRoomId;
     }
-
+    /**
+     * Gets the current role of the user in the room.
+     * 
+     * @returns {string|null} The current role ('host' or 'guest'), or null if not in a room.
+     */
     function getCurrentRole() {
         return currentRole;
     }
 
+    /**
+     * Checks if the current user is the host.
+     * 
+     * @returns {boolean} True if the user is the host, false otherwise.
+     */
     function isHost() {
         return currentRole === 'host';
     }
 
+    /**
+     * Checks if the current user is the guest.
+     * 
+     * @returns {boolean} True if the user is the guest, false otherwise.
+     */
     function isGuest() {
         return currentRole === 'guest';
     }
-
+    /**
+     * Freezes the RoomManager after a successful connection.
+     * This stops all listeners and updates.
+     * 
+     * @returns {void} - No return value.
+     */
     function freezeAfterConnect() {
         try {
             frozen = true;
@@ -390,6 +485,12 @@
         }
     }
 
+    /**
+     * Unfreezes the RoomManager, resuming listeners and updates.
+     * 
+     * @param {string} reason - The reason for unfreezing (optional).
+     * @returns {void} - No return value.
+     */
     function unfreeze(reason = '') {
         try {
             if (!frozen) return;
@@ -409,6 +510,9 @@
         }
     }
 
+    /**
+     * Makes all roomManager functions globally accessible.
+     */
     global.RoomManager = {
         init,
         createRoom,
