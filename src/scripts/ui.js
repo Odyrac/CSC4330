@@ -1,21 +1,41 @@
 (function (global) {
+    /**
+     * Gets the dimensions of a card from CSS variables.
+     * 
+     * @returns {Object} An object containing the width and height of a card.
+     */
     function getCardDimensions() {
         const width = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-width')) || 100;
         const height = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-height')) || 140;
         return { width, height };
     }
 
+    /**
+     * Gets the vertical offset for stacking cards on the board from CSS variables.
+     * 
+     * @returns {number} The vertical offset in pixels.
+     */
     function getCardOffsetY() {
         return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--board-offset-y')) || 40;
     }
 
+    /**
+     * Clears all child elements from a container.
+     * 
+     * @param {HTMLElement} container - The container element to clear.
+     */
     function clear(container) {
         if (!container) return;
         while (container.firstChild) {
             container.removeChild(container.firstChild);
         }
     }
-
+    /**
+     * Renders a facedown card pile with a count.
+     * 
+     * @param {HTMLElement} container - The container element to render into.
+     * @param {Array} cards - The array of cards in the pile.
+     */
     function renderFacedown(container, cards) {
         clear(container);
         const img = document.createElement('img');
@@ -28,7 +48,12 @@
         counter.textContent = Array.isArray(cards) ? cards.length : 0;
         container.appendChild(counter);
     }
-
+    /**
+     * Renders the current card.
+     * 
+     * @param {HTMLElement} container - The container element to render into.
+     * @param {Object} card - The current card object.
+     */
     function renderCurrent(container, card) {
         clear(container);
         if (!card) return;
@@ -37,7 +62,12 @@
         img.alt = 'Current card';
         container.appendChild(img);
     }
-
+    /**
+     * Renders the discard pile with the top card and count.
+     * 
+     * @param {HTMLElement} container - The container element to render into.
+     * @param {Array} discard - The array of discarded cards.
+     */
     function renderDiscard(container, discard) {
         clear(container);
         const cards = Array.isArray(discard) ? discard : [];
@@ -52,6 +82,12 @@
         container.appendChild(counter);
     }
 
+    /**
+     * Renders a stack of cards in a board slot if present.
+     * 
+     * @param {HTMLElement} slotEl - The board slot element to render into.
+     * @param {Array} cards - The array of cards in the slot.
+     */
     function renderBoardSlot(slotEl, cards) {
         if (!slotEl) return;
 
@@ -90,7 +126,12 @@
             slotEl.appendChild(wrapper);
         }
     }
-
+    /**
+     * Renders a small pile of cards showing only the top card.
+     * 
+     * @param {HTMLElement} container - The container element to render into.
+     * @param {Array} cards - The array of cards in the pile.
+     */
     function renderSmallPile(container, cards) {
         clear(container);
         const stack = Array.isArray(cards) ? cards : [];
@@ -101,6 +142,13 @@
         container.appendChild(img);
     }
 
+    /**
+     * Renders the turn indicator.
+     * 
+     * @param {HTMLElement|string} container - The container element or its ID to render into.
+     * @param {string} turn - The current turn ('player' or 'opponent').
+     * @throws Will throw an error if the container is not found or invalid.
+     */
     function renderTurnIndicator(container, turn) {
         let el = container;
         if (typeof container === 'string') el = document.getElementById(container);
@@ -118,7 +166,7 @@
         el.textContent = label;
         el.setAttribute('data-turn', turn);
     }
-
+    // Expose functions globally
     global.UI = {
         renderFacedown,
         renderCurrent,

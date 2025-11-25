@@ -1,17 +1,26 @@
 (function (window) {
   'use strict';
-
+  // Check if multiplayer mode is enabled via URL parameter
+  // If not, exit early
   try {
     const urlParams = new URLSearchParams(window.location.search);
     const isMultiplayer = urlParams.has('multiplayer');
-
+    // Exit if not in multiplayer mode
     if (!isMultiplayer) {
       return;
     }
-
+    //
     window._multiplayerMode = true;
     window._gameInitialized = false;
-
+    
+    /**
+     * Initializes multiplayer game components once the DOM is fully loaded.
+     * 
+     * @namespace GameMultiplayerBootstrap
+     * @memberof window - Global namespace
+     * @property {Function} init - Initializes multiplayer components.
+     * @throws Will show a toast message and redirect to home on error.
+     */
     document.addEventListener('DOMContentLoaded', function () {
       try {
         const db = window.FirebaseConfig && window.FirebaseConfig.init ? window.FirebaseConfig.init() : null;

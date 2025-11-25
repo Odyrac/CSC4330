@@ -1,5 +1,6 @@
 (function (global) {
     const DEFAULT_CONFIG = {
+        // Weights for different move destinations (higher = more preferred)
         weights: {
             foundation: 100,
             trump: 80,
@@ -14,10 +15,23 @@
         afterMoveDelay: 300,
         animationDelay: 600
     };
-
+    /**
+     * Applies a move to the game state.
+     * @param {Object} gameState - The current game state.
+     * @param {Object} from - The source of the move.
+     * @param {string} sourceType - The type of the source (e.g., 'current', 'discard', 'board').
+     * @param {Object} dest - The destination of the move.
+     * @param {string} destType - The type of the destination (e.g., 'board', 'trump', 'foundation', 'player', 'opponent').
+     * @param {string} moveType - The type of move ('unique' or 'multiple').
+     * @returns {boolean} - True if the move was applied successfully, false otherwise.
+     */
     function applyMove(gameState, from, sourceType, dest, destType, moveType) {
+        // Deep copy of game state to avoid mutations
         const gs = gameState;
-
+        /**
+         * Extracts cards from the source based on the source type.
+         * @returns {Array} - An array of extracted cards.
+         */
         function extractCards() {
             if (sourceType === 'current') {
                 const owner = from.side;
@@ -72,7 +86,21 @@
 
         return false;
     }
-
+    /**
+     * Plays the bot's turn. Contains the functions showBotLoader, hideBotLoader, showBotBlocker, hideBotBlocker,
+     * postMoveCleanup, tryStrategyOnce, animateBotMove, getElementForSource, getElementForDest,
+     * tryMoveFromSource, and orchestrate.
+     * 
+     * Logic: The bot will attempt to make moves based on the current game state,
+     * prioritizing moves according to the configured weights and safety limits.
+     * It will continue making moves until it can no longer do so or reaches safety limits.
+     * The bot brute forces through possible moves from its current cards, discard pile, and board slots.
+     * It also handles drawing from the facedown pile when necessary.
+     * 
+     * @param {*} gameState 
+     * @param {*} config 
+     * @returns {*} gameState after bot's turn
+     */
     function playBot(gameState, config) {
         const gs = gameState;
         if (!gs) return gs;
@@ -83,6 +111,10 @@
         cfg.weights = Object.assign({}, DEFAULT_CONFIG.weights, (config && config.weights) || (window.Bot && window.Bot.config && window.Bot.config.weights) || {});
         cfg.safety = Object.assign({}, DEFAULT_CONFIG.safety, (config && config.safety) || (window.Bot && window.Bot.config && window.Bot.config.safety) || {});
 
+        /***
+         * Displays a loading indicator for the bot's turn.
+         * Used in orchestrate before the bot starts making moves.
+         */
         function showBotLoader() {
             try {
                 let el = document.getElementById('botLoader');
@@ -112,14 +144,20 @@
                 }
             } catch (e) { }
         }
-
+        /**
+         * Hides the loading indicator for the bot's turn.
+         * Used in orchestrate after the bot's turn is complete.
+         */
         function hideBotLoader() {
             try {
                 const el = document.getElementById('botLoader');
                 if (el) el.style.display = 'none';
             } catch (e) { }
         }
-
+        /**
+         * Displays a transparent overlay to block user interaction during the bot's turn.
+         * Used in orchestrate before the bot starts making moves.
+         */
         function showBotBlocker() {
             try {
                 let b = document.getElementById('botBlocker');
@@ -141,7 +179,10 @@
                 b.style.display = 'block';
             } catch (e) { }
         }
-
+        /**
+         * Hides the transparent overlay blocking user interaction during the bot's turn.
+         * Used in orchestrate after the bot's turn is complete.
+         */
         function hideBotBlocker() {
             try {
                 const b = document.getElementById('botBlocker');
@@ -149,6 +190,10 @@
             } catch (e) { }
         }
 
+        /**
+         * Cleans up the UI after the bot has made a move.
+         * Used in tryMoveFromSource and orchestrate after applying a move.
+         */
         function postMoveCleanup() {
             try {
                 const clones = document.querySelectorAll && document.querySelectorAll('.dragging-image, .dragging-image-stack');
@@ -190,7 +235,12 @@
                 }
             } catch (e) { }
         }
-
+        /**
+         * Attempts to execute the bot's moves once based on the current game state.
+         * 
+         * Used in orchestrate to repeatedly attempt moves until no more can be made.
+         * @returns {boolean} - True if a move was made, false otherwise.
+         */
         async function tryStrategyOnce() {
             const boardLen = gs.board ? gs.board.length : 0;
             for (let i = 0; i < boardLen; i++) {
@@ -219,6 +269,13 @@
             }
         }
 
+        /**
+         * Attempts to get the HTML element corresponding to the source of the move.
+         * 
+         * Used in tryMoveFromSource to get the source element for animation.
+         * @param {*} s Source of the move
+         * @returns {null|HTMLElement} - The HTML element corresponding to the source of the move.
+         */
         function getElementForSource(s) {
             try {
                 if (s.type === 'current') {
@@ -233,7 +290,14 @@
             } catch (e) { }
             return null;
         }
-
+        
+        /**
+         * Attempts to get the HTML element corresponding to the destination of the move.
+         * 
+         * Used in tryMoveFromSource to get the destination element for animation, and in orchestrate for the bot's current card.
+         * @param {*} d Destination of the move
+         * @returns {null|HTMLElement} - The HTML element corresponding to the destination of the move.
+         */
         function getElementForDest(d) {
             try {
                 if (d.type === 'board') {
@@ -255,6 +319,13 @@
             return null;
         }
 
+        /**
+         * Attempts to move cards from a given source to valid destinations.
+         * 
+         * Used in tryStrategyOnce to attempt moves from various sources, and used in orchestrate for the bot's current card.
+         * @param {*} s Source of the move
+         * @returns {boolean} - True if a move was made, false otherwise.
+         */
         async function tryMoveFromSource(s) {
             const cardsToMove = (s.type === 'board' && s.count && s.count > 1) ? (gs.board[s.index].slice(gs.board[s.index].length - s.count)) : [s.card];
             const boardNonEmpty = [];
@@ -349,7 +420,13 @@
 
             return false;
         }
-
+        
+        /**
+         * Orchestrates the bot's turn by making moves based on the current game state and configuration.
+         * 
+         * Used at the end of playBot to manage the bot's turn.
+         * @returns {Object} - The updated game state after the bot's turn.
+         */
         async function orchestrate() {
             try { window.Bot = window.Bot || {}; window.Bot.suppressToasts = true; window.Bot.isPlaying = true; } catch (e) { }
             showBotLoader();
@@ -434,7 +511,7 @@
 
         return orchestrate();
     }
-
+    // Expose the playBot function and default config to the global Bot namespace
     global.Bot = global.Bot || {};
     global.Bot.playBot = playBot;
     global.Bot.config = global.Bot.config || DEFAULT_CONFIG;
