@@ -8,7 +8,12 @@ const firebaseConfig = {
 };
 
 let db = null;
-
+/**
+ * Initializes Firebase and Firestore.
+ * 
+ * @returns {firebase.firestore.Firestore} The Firestore database instance.
+ * @throws Will throw an error if initialization fails.
+ */
 function initFirebase() {
     try {
         if (!firebase.apps.length) {
@@ -20,7 +25,12 @@ function initFirebase() {
         throw error;
     }
 }
-
+/**
+ * Makes Firebase configuration functions globally accessible.
+ * @namespace FirebaseConfig
+ * @property {Function} init - Initializes Firebase and Firestore.
+ * @property {Function} getDb - Gets the Firestore database instance.
+ */
 window.FirebaseConfig = {
     init: initFirebase,
     getDb: () => db

@@ -87,6 +87,7 @@
      * @param {string} pin - The room PIN to join.
      * @param {boolean} asHost - Whether to join as host.
      * @returns {Object} An object containing success status, room PIN, role, reconnection status, and game state.
+     * @throws Will throw an error if joining the room fails or if the PIN is invalid or the room does not exist.
      */
     async function joinRoom(pin, asHost = false) {
         if (frozen) {
@@ -163,6 +164,7 @@
      * 
      * @param {string} pin - The room PIN to listen to.
      * @returns {void} - No return value.
+     * @throws Will throw an error if listening fails.
      */
     function listenToRoom(pin) {
         if (frozen) {
@@ -211,6 +213,7 @@
      * 
      * @param {Object} data - The data to update in the room.
      * @returns {Object} An object containing success status and optional error message.
+     * @throws Will throw an error if updating the room fails or if there is no active room.
      */
     async function updateRoom(data) {
         if (frozen) {
@@ -269,6 +272,7 @@
      * 
      * @param {string} peerId - The peer ID to set.
      * @returns {Object} An object containing success status and optional error message.
+     * @throws Will throw an error if setting the peer ID fails or if there is no active room.
      */
     async function setMyPeerId(peerId) {
         if (frozen) {
@@ -359,6 +363,7 @@
      * 
      * @param {Object} signal - The signaling message to send.
      * @returns {Object} An object containing success status and optional error message.
+     * @throws Will throw an error if sending the signal fails or if there is no active room.
      */
     async function sendSignal(signal) {
         if (frozen) {
@@ -475,6 +480,7 @@
      * This stops all listeners and updates.
      * 
      * @returns {void} - No return value.
+     * @throws Will throw an error if freezing fails.
      */
     function freezeAfterConnect() {
         try {
@@ -490,6 +496,7 @@
      * 
      * @param {string} reason - The reason for unfreezing (optional).
      * @returns {void} - No return value.
+     * @throws Will throw an error if unfreezing fails.
      */
     function unfreeze(reason = '') {
         try {
