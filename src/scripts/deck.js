@@ -7,7 +7,7 @@
     /**
      * This function defines the four suits and the associated values, as well as tarot cards (Suit cards = 56, Trumps = 21, Fool??)
      * 
-     * @returns {Array} ?77 cards?
+     * @returns {Array} 78 cards
      */
     function buildDeck() {
         const deck = [];
@@ -35,6 +35,7 @@
                 type: 'trump'
             });
         });
+        //adds the excuse card to the deck
         deck.push({
             id: 'excuse',
             suit: undefined,
@@ -64,8 +65,10 @@
 
 
     /**
+     * This function checks if the facedown deck is empty, and if so, it replenishes it by shuffling the discard pile,
+     * leaving the last discarded card in the discard pile.
      * 
-     * @param {*} side  
+     * @param {Object} side // expects an object with 'facedown' and 'discard' arrays
      */
     function replenishFromDiscard(side) {
         if (!side) return;
@@ -113,6 +116,9 @@
         }
         return { hand1, hand2, initialBoard };
     }
-
+    /**
+     * Exports the Deck object with its associated functions
+     * @namespace Deck
+     */
     global.Deck = { buildDeck, shuffleDeck, replenishFromDiscard, dealDeck };
     })(window);
