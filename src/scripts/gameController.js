@@ -1,5 +1,11 @@
 (function (global) {
+    /**
+     * Sets up the game state and UI.
+     * @param {Object|null} initialGameState - Optional initial game state for multiplayer or restored games.
+     * @throws Will throw an error if setup fails.
+     */
     function setupGame(initialGameState = null) {
+        // Determine game mode based on URL parameters
         try {
             const qs = (function () { try { return window.location && window.location.search ? window.location.search : ''; } catch (e) { return ''; } })();
             const params = new URLSearchParams(qs);
@@ -18,6 +24,12 @@
             window._blitzEnabled = false;
         }
 
+        /**
+         * Determines if the current player is a guest in a multiplayer game.
+         * 
+         * @returns {boolean} True if the player is a guest, false otherwise.
+         * @throws Will not throw; errors are caught and false is returned.
+         */
         let iAmGuest = false;
         try {
             if (window.RoomManager && typeof RoomManager.isGuest === 'function') {
@@ -48,18 +60,30 @@
             initialBoard = dealResult.initialBoard;
         }
 
+        // Get UI elements
         const playerFacedown = document.getElementById('playerFacedown');
         const playerCurrent = document.getElementById('playerCurrent');
         const playerDiscard = document.getElementById('playerDiscard');
 
+        // Opponent elements
         const opponentFacedown = document.getElementById('opponentFacedown');
         const opponentCurrent = document.getElementById('opponentCurrent');
         const opponentDiscard = document.getElementById('opponentDiscard');
 
+        // Clock elements
         const playerClockEl = document.getElementById('playerClock');
         const opponentClockEl = document.getElementById('opponentClock');
         const clocksContainer = document.getElementById('clocks');
 
+        /**
+         * Initializes the game state object.
+         * @type {Object}
+         * @property {string} currentPlayerId - The ID of the current player ('player' or 'opponent').
+         * @property {Object} players - The players in the game.
+         * @property {Object} players.player - The human player.
+         * @property {Array} players.player.facedown - The facedown cards of the player.
+         * @property {Object|null}
+         */
         let srcMe = null, srcOpp = null;
         if (initialGameState) {
             srcMe = initialGameState.players.opponent;
@@ -124,8 +148,14 @@
             UI.renderTurnIndicator('turnIndicator', gameState.currentPlayerId);
         } catch (e) { }
 
+        // Helper to get current turn
         function getCurrentTurn() { return gameState.currentPlayerId; }
-
+        /**
+         * Checks for victory conditions and handles game over state.
+         * 
+         * @returns {boolean} True if the game is over, false otherwise.
+         * @throws Will not throw; errors are caught and handled internally.
+         */
         function checkVictory() {
             try { if (window._gameOverDisplayed) return true; } catch (e) { }
             if (player.facedown.length === 0 && player.discard.length === 0 && !player.current) {
@@ -162,7 +192,12 @@
             }
             return false;
         }
-
+        /**
+         * Sets the current turn to the specified player.
+         * 
+         * @param {string} turn - The player whose turn it is ('player' or 'opponent').
+         * @throws Will not throw; errors are caught and handled internally.
+         */
         function setTurn(turn) {
             if (turn !== 'player' && turn !== 'opponent') return;
 
@@ -196,6 +231,11 @@
             } catch (e) { }
         }
 
+        /**
+         * Runs the bot's turn if it's the opponent's turn.
+         * 
+         * @throws Will not throw; errors are caught and handled internally.
+         */
         function maybeRunBot() {
             try {
                 if (gameState.currentPlayerId !== 'opponent') return;
@@ -241,6 +281,12 @@
 
         let _blitzTimerId = null;
 
+        /**
+         * Determines if the timer is authoritative for the current player.
+         * 
+         * @returns {boolean} True if the timer is authoritative, false otherwise.
+         * @throws Will not throw; errors are caught and true is returned.
+         */
         function _isTimerAuthoritative() {
             try {
                 return !window._multiplayerEnabled || !iAmGuest;
@@ -249,6 +295,13 @@
             }
         }
 
+        /**
+         * Formats time in seconds to "M:SS" format.
+         * 
+         * @param {number} seconds - The time in seconds.
+         * @returns {string} The formatted time string.
+         * @throws Will not throw; errors are caught and "0:00" is returned.
+         */
         function _formatTime(seconds) {
             if (seconds < 0) seconds = 0;
             const m = Math.floor(seconds / 60);
@@ -256,6 +309,11 @@
             return `${m}:${s.toString().padStart(2, '0')}`;
         }
 
+        /**
+         * Renders the player and opponent clocks.
+         * 
+         * @throws Will not throw; errors are caught and rendering is skipped.
+         */
         function _renderClocks() {
             if (!clocksContainer || !playerClockEl || !opponentClockEl) return;
             const pr = gameState.timeRemaining.player;
@@ -266,6 +324,12 @@
             if (or <= 10) opponentClockEl.classList.add('low'); else opponentClockEl.classList.remove('low');
         }
 
+        /**
+         * Handles timeout events for players.
+         * 
+         * @param {string} loserId - The ID of the player who timed out ('player' or 'opponent').
+         * @throws Will not throw; errors are caught and handled internally.
+         */
         function _handleTimeout(loserId) {
             try { if (window._gameOverDisplayed) return; } catch (_) { }
             const winner = loserId === 'player' ? 'opponent' : 'player';
@@ -282,6 +346,10 @@
             try { if (window.RoomManager && window.RoomManager.updateRoom) window.RoomManager.updateRoom({ status: 'finished', winner }); } catch (e) { }
         }
 
+        /**
+         * Ticks the blitz timer, updating time remaining and handling timeouts.
+         * 
+         */
         function _tickBlitz() {
             if (!_isTimerAuthoritative()) return;
             if (!window._blitzEnabled) return;
@@ -300,6 +368,10 @@
             _renderClocks();
         }
 
+        /**
+         * Starts the blitz timer.
+         * 
+         */
         function _startBlitzTimer() {
             if (!window._blitzEnabled) return;
             if (!clocksContainer || !playerClockEl || !opponentClockEl) return;
@@ -308,7 +380,9 @@
             if (_blitzTimerId != null) return;
             _blitzTimerId = setInterval(_tickBlitz, 1000);
         }
-
+        /**
+         * Stops the blitz timer.
+         */
         function _stopBlitzTimer() {
             if (_blitzTimerId != null) {
                 clearInterval(_blitzTimerId);
@@ -316,10 +390,16 @@
             }
         }
 
+        /**
+         * Initializes the blitz timer if enabled.
+         */
         if (window._blitzEnabled) {
             _startBlitzTimer();
         }
 
+        /**
+         * Global helpers for blitz mode.
+         */
         global._gameControllerBlitzHelpers = {
             setBlitzFromHost: function (enabled) {
                 try {
@@ -349,6 +429,16 @@
             stopTimer: _stopBlitzTimer
         };
 
+        /**
+         * Moves a card from the facedown pile to the current pile for the specified side.
+         * 
+         * @param {Object} side - The player side (player or opponent).
+         * @param {HTMLElement} facedownEl - The facedown pile element.
+         * @param {HTMLElement} currentEl - The current pile element.
+         * @param {HTMLElement} discardEl - The discard pile element.
+         * @returns {Promise<void>} A promise that resolves when the move is complete.
+         * @throws Will not throw; errors are caught and handled internally.
+         */
         async function moveToCurrent(side, facedownEl, currentEl, discardEl) {
             try { if (window.Bot && window.Bot.isPlaying && !(window.Bot._internalAction === true)) return; } catch (e) { }
 
@@ -505,7 +595,14 @@
         });
 
         DragDrop.init({ playerDiscardEl: playerDiscard, opponentDiscardEl: opponentDiscard, boardSlotEls: boardSlots, trumpPileEls, foundationPileEls, excusePileEl });
-
+        /**
+         * Appends a card to the specified board slot.
+         * 
+         * @param {number} slotIndex - The index of the board slot.
+         * @param {string} owner - The owner of the card ('player' or 'opponent').
+         * @param {Object} card - The card to append.
+         * @throws Will not throw; errors are caught and handled internally.
+         */
         function appendCardToBoard(slotIndex, owner, card) {
             const gs = window.GameState || gameState;
             if (slotIndex == null || slotIndex < 0 || slotIndex >= gs.board.length) return;
@@ -704,6 +801,14 @@
             UI.renderBoardSlot(slotEl, (window.GameState || gameState).board[idx]);
         });
 
+        /**
+         * Appends a card to the specified discard pile.
+         * 
+         * @param {HTMLElement} pileEl - The discard pile element.
+         * @param {string} owner - The owner of the card ('player' or 'opponent').
+         * @param {Object} card - The card to append.
+         * @throws Will not throw; errors are caught and handled internally.
+         */
         function appendCardToPile(pileEl, owner, card) {
             if (owner === 'player') {
                 player.discard.push(card);
@@ -894,5 +999,6 @@
         }
     });
 
+    // Expose setupGame to global scope for initialization
     global.GameController = { setupGame };
 })(window);
