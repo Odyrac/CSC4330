@@ -372,7 +372,6 @@
 
         try { window._shuffleAnimationInProgress = false; } catch (e) { }
     }
-    
     // Expose functions to global scope
     global.Animations = {
         animateCardDraw,
