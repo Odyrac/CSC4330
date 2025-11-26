@@ -8,6 +8,16 @@ test.describe('Blitz Mode Bot Play E2E Test', () => {
         const context = await browser.newContext();
         page = await context.newPage();
 
+        await page.addInitScript(() => {
+            let seed = 12345;
+            Math.random = function () {
+            const x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+            };
+            //NOTE: This returns the following deck: [Trump(3), black(5 spades), red(10 hearts), 
+            //                                        red(7 diamonds), black(2 clubs)]
+        });
+
        //navigate to the home page — relative path resolves to baseURL automatically
         await page.goto(baseURL); 
 

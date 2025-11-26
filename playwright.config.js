@@ -11,6 +11,17 @@ module.exports = defineConfig({
     baseURL: 'https://odyrac.github.io/CSC4330/',
     headless: false,
     viewport: { width: 1280, height: 720 },
+    initScripts:[ {
+      content: `
+          (function () {
+            let seed = 12345;
+            Math.random = function () {
+              const x = Math.sin(seed++) * 10000;
+              return x - Math.floor(x);
+            };
+          })();
+        `
+  }]
   },
 
   timeout: 30000,
