@@ -78,10 +78,10 @@ test('clicking facedown moves a card to current', async () => {
   __loadScript('src/scripts/gameController.js');
 
   const initialGameState = {
-    currentPlayerId: 'player',
+    currentPlayerId: 'opponent',
     players: {
-      player: { facedown: [{id:'p1'}], current: null, discard: [] },
-      opponent: { facedown: [{id:'o1'}], current: null, discard: [] }
+      player: { facedown: [{id:'o1'}], current: null, discard: [] },
+      opponent: { facedown: [{id:'p1'}], current: null, discard: [] }
     },
     board: [[],[],[],[],[],[]],
     trumpPiles: [[],[]],
@@ -98,3 +98,4 @@ test('clicking facedown moves a card to current', async () => {
   const currentText = document.getElementById('playerCurrent').textContent;
   expect(currentText).toBe('p1');
 });
+
