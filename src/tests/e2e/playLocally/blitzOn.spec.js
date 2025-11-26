@@ -7,7 +7,7 @@ test.describe('Blitz Mode Local Play E2E Test', () => {
      test.beforeEach(async ({ browser, baseURL }) => {
         const context = await browser.newContext();
         page = await context.newPage();
-
+        
         await page.addInitScript(() => {
             let seed = 12345;
             Math.random = function () {
